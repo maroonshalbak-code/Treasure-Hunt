@@ -21,21 +21,38 @@ export default function Hunt() {
   const [pendingIds, setPendingIds] = useState(new Set())
   const [participants, setParticipants] = useState([])
   const [tab, setTab] = useState('clues')
-  const [debugProgress, setDebugProgress] = useState([])
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState([])
   const [complexityFilter, setComplexityFilter] = useState(0)   // 0 = all, 1-5
   const [statusFilter, setStatusFilter] = useState('all')        // all | open | pending | completed
   const [typeFilter, setTypeFilter] = useState('all')            // all | text | gps | qr | image
 
-  function pushNotification(type, clueTitle) {
+  function pushNotification(type, clueTitle, username) {
     const id = Date.now() + Math.random()
-    setNotifications(prev => [...prev, { id, type, clueTitle }])
+    setNotifications(prev => [...prev, { id, type, clueTitle, username }])
     setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 5500)
   }
 
   function dismissNotification(id) {
     setNotifications(prev => prev.filter(n => n.id !== id))
+  }
+
+  function playSuccessSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      const notes = [523, 659, 784, 1047]
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.frequency.value = freq
+        gain.gain.setValueAtTime(0.25, ctx.currentTime + i * 0.12)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.25)
+        osc.start(ctx.currentTime + i * 0.12)
+        osc.stop(ctx.currentTime + i * 0.12 + 0.25)
+      })
+    } catch {}
   }
 
   useEffect(() => {
@@ -75,27 +92,28 @@ export default function Hunt() {
         (snap) => {
           const completed = new Set()
           const pending = new Set()
-          const rawDocs = []
           snap.docs.forEach(d => {
-            const { clueId, status, playerId, huntId: hid } = d.data()
-            rawDocs.push({ clueId, status, playerId: playerId?.slice(-6), huntId: hid })
+            const { clueId, status, playerId } = d.data()
             if (status === 'approved') completed.add(clueId)
             else if (status === 'pending' && playerId === user.uid) pending.add(clueId)
             // rejected: allow current user to resubmit (don't add to either set)
           })
-          setDebugProgress(rawDocs)
           setCompletedIds(completed)
           setPendingIds(pending)
 
           // Skip notifications on the initial load snapshot
           if (!isFirstSnapshot) {
             snap.docChanges().forEach(change => {
-              if (change.type === 'modified') {
-                const { status, clueId } = change.doc.data()
-                if (status === 'approved' || status === 'rejected') {
-                  const clue = cluesData.find(c => c.id === clueId)
-                  pushNotification(status, clue?.title || 'Your clue')
-                }
+              const { status, clueId, username } = change.doc.data()
+              // 'added' = new instant-approved clue (text/gps/qr); 'modified' = photo approved by admin
+              if ((change.type === 'added' || change.type === 'modified') && status === 'approved') {
+                const clue = cluesData.find(c => c.id === clueId)
+                pushNotification('approved', clue?.title || 'Clue', username)
+                playSuccessSound()
+              }
+              if (change.type === 'modified' && status === 'rejected') {
+                const clue = cluesData.find(c => c.id === clueId)
+                pushNotification('rejected', clue?.title || 'Clue', username)
               }
             })
           }
@@ -136,10 +154,7 @@ export default function Hunt() {
   return (
     <div className="page-wide" style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '1.5rem', alignItems: 'start' }}>
       <div>
-        <div style={{ background:'#1a1a2e', color:'#00ff88', fontFamily:'monospace', fontSize:10, padding:'0.5rem', borderRadius:6, marginBottom:8, wordBreak:'break-all' }}>
-          <strong>DEBUG</strong> uid:{user?.uid?.slice(-6)} huntId:{huntId?.slice(-6)} docs:{debugProgress.length}<br/>
-          {debugProgress.map((d,i) => <span key={i}>[{d.status}] clue:{d.clueId?.slice(-6)} by:{d.playerId}<br/></span>)}
-        </div>
+
         <div style={{ marginBottom: '1.5rem' }}>
           <button className="btn-ghost" style={{ fontSize: 12, marginBottom: 12 }} onClick={() => navigate('/')}>
             {t('hunt.back')}
@@ -400,7 +415,9 @@ export default function Hunt() {
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: 14 }}>
-                {notif.type === 'approved' ? t('hunt.clueApproved') : t('hunt.clueRejected')}
+                {notif.type === 'approved'
+                  ? (notif.username ? `${notif.username} found a clue!` : t('hunt.clueApproved'))
+                  : t('hunt.clueRejected')}
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.75, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {notif.clueTitle}

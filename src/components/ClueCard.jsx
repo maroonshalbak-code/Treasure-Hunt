@@ -30,6 +30,17 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
 
   useEffect(() => { return () => stopScanner() }, [])
 
+  // Auto-close if another player completes this clue while we have it open
+  useEffect(() => {
+    if ((completed || pending) && expanded) {
+      setExpanded(false)
+      setSubmitOpen(false)
+      setError(null)
+      setSuccess(null)
+      stopScanner()
+    }
+  }, [completed, pending])
+
   async function markComplete(photoUrl = null) {
     setLoading(true)
     const existingSnap = await getDocs(query(
