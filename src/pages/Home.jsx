@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore'
+import { collection, query, getDocs, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -17,8 +17,8 @@ export default function Home() {
   useEffect(() => {
     if (!user || profile === undefined) return
 
-    // All authenticated users can read hunts (rules allow it); filter in client
-    const q = query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
+    // Fetch all hunts, filter/sort on client — avoids composite index requirement
+    const q = query(collection(db, 'hunts'), orderBy('createdAt', 'desc'))
 
     const unsub = onSnapshot(q, async (snap) => {
       try {
@@ -26,7 +26,8 @@ export default function Home() {
           const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
           return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
         }))
-        // Admins see all; players only see hunts they're assigned to
+        // Filter active hunts; players also filtered to their assigned hunts
+        data = data.filter(h => h.isActive)
         if (!profile?.isAdmin) {
           data = data.filter(h => (h.allowedUsers || []).includes(user.uid))
         }
