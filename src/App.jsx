@@ -53,7 +53,7 @@ function AppRoutes() {
       {user && <Nav />}
       <Routes>
         <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
-        <Route path="/join/:token" element={user ? <Navigate to="/" replace /> : <Join />} />
+        <Route path="/join" element={user ? <Navigate to="/" replace /> : <Join />} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/hunt/:huntId" element={<ProtectedRoute><Hunt /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />

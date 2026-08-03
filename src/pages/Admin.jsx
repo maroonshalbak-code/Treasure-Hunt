@@ -8,7 +8,7 @@ import {
 import { db } from '../lib/firebase'
 import { useAuth } from '../lib/AuthContext'
 import QRCode from 'qrcode'
-import { v4 as uuidv4 } from 'uuid'
+
 
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
@@ -313,55 +313,21 @@ export default function Admin() {
     window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
   }
 
-  async function generateInviteLink() {
-    setGeneratingLink(true)
-    try {
-      const token = uuidv4()
-      const expires = new Date()
-      expires.setDate(expires.getDate() + 30)
-      await setDoc(doc(db, 'invites', token), {
-        type: 'open',
-        status: 'pending',
-        createdAt: serverTimestamp(),
-        expiresAt: Timestamp.fromDate(expires),
-      })
-      const link = `${window.location.origin}/join/${token}`
-      openWhatsApp(`🏴‍☠️ You're invited to join the treasure hunt!\n\nCreate your free account here:\n${link}\n\n(Link valid for 30 days)`)
-    } catch (err) {
-      setMsg({ type: 'error', text: err.message || 'Failed to generate invite link.' })
-      console.error('Invite link error:', err)
-    }
-    setGeneratingLink(false)
+  function generateInviteLink() {
+    const link = `${window.location.origin}/join`
+    openWhatsApp(`🏴\u200d☠️ You're invited to join the treasure hunt!\n\nCreate your free account here:\n${link}\n\nSee you on the hunt!`)
   }
 
-  async function handleCreatePlayer(e) {
+  function handleCreatePlayer(e) {
     e.preventDefault()
     if (!newPlayer.username || !newPlayer.email || !newPlayer.password) return
-    setCreatingPlayer(true)
-    try {
-      const token = uuidv4()
-      const expires = new Date()
-      expires.setDate(expires.getDate() + 7)
-      await setDoc(doc(db, 'invites', token), {
-        type: 'preregistered',
-        status: 'pending',
-        username: newPlayer.username,
-        email: newPlayer.email,
-        password: newPlayer.password,
-        createdAt: serverTimestamp(),
-        expiresAt: Timestamp.fromDate(expires),
-      })
-      const link = `${window.location.origin}/join/${token}`
-      const msg = `🏴‍☠️ Your treasure hunt account is ready!\n\n👤 Username: ${newPlayer.username}\n📧 Email: ${newPlayer.email}\n🔑 Password: ${newPlayer.password}\n\nTap here to activate your account:\n${link}\n\n(Link expires in 7 days)`
-      openWhatsApp(msg)
-      setNewPlayer({ username: '', email: '', password: '' })
-      setShowCreatePlayer(false)
-      setShowPlayerPassword(false)
-    } catch (err) {
-      setMsg({ type: 'error', text: err.message || 'Failed to create player invite.' })
-      console.error('Create player error:', err)
-    }
-    setCreatingPlayer(false)
+    const payload = btoa(JSON.stringify({ username: newPlayer.username, email: newPlayer.email, password: newPlayer.password }))
+    const link = `${window.location.origin}/join?preset=${payload}`
+    const msg = `🏴\u200d☠️ Your treasure hunt account is ready!\n\n👤 Username: ${newPlayer.username}\n📧 Email: ${newPlayer.email}\n🔑 Password: ${newPlayer.password}\n\nTap here to activate your account:\n${link}`
+    openWhatsApp(msg)
+    setNewPlayer({ username: '', email: '', password: '' })
+    setShowCreatePlayer(false)
+    setShowPlayerPassword(false)
   }
 
   if (loading || !profile) return <div className="page" style={{ display:'flex', justifyContent:'center', paddingTop:'4rem' }}><div className="spinner" /></div>
