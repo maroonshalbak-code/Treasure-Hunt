@@ -16,19 +16,25 @@ export default function Home() {
 
   useEffect(() => {
     async function fetchHunts() {
-      const q = query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
-      const snap = await getDocs(q)
-      const data = await Promise.all(snap.docs.map(async d => {
-        const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
-        return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
-      }))
-      const visible = profile?.isAdmin
-        ? data
-        : data.filter(h => (h.allowedUsers || []).includes(user.uid))
-      setHunts(visible)
-      setLoading(false)
+      try {
+        // Admins see all active hunts; players only query hunts they're in
+        // (using array-contains avoids Firestore permission errors on the query)
+        const q = profile?.isAdmin
+          ? query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
+          : query(collection(db, 'hunts'), where('isActive', '==', true), where('allowedUsers', 'array-contains', user.uid), orderBy('createdAt', 'desc'))
+        const snap = await getDocs(q)
+        const data = await Promise.all(snap.docs.map(async d => {
+          const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
+          return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
+        }))
+        setHunts(data)
+      } catch (err) {
+        console.error('fetchHunts error:', err)
+      } finally {
+        setLoading(false)
+      }
     }
-    if (user) fetchHunts()
+    if (user && profile !== undefined) fetchHunts()
   }, [user, profile])
 
   if (loading) return <div className="page" style={{ display:'flex', justifyContent:'center', paddingTop:'4rem' }}><div className="spinner" /></div>

@@ -11,6 +11,16 @@ import { applyLanguage } from './i18n'
 
 const AuthContext = createContext(null)
 
+async function fetchProfile(uid, retries = 3) {
+  for (let i = 0; i < retries; i++) {
+    const snap = await getDoc(doc(db, 'profiles', uid))
+    if (snap.exists()) return snap.data()
+    // Profile not yet written (race with Join.jsx) — wait and retry
+    if (i < retries - 1) await new Promise(r => setTimeout(r, 1500))
+  }
+  return null
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [profile, setProfile] = useState(null)
@@ -20,8 +30,7 @@ export function AuthProvider({ children }) {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       setUser(firebaseUser)
       if (firebaseUser) {
-        const snap = await getDoc(doc(db, 'profiles', firebaseUser.uid))
-        const profileData = snap.exists() ? snap.data() : null
+        const profileData = await fetchProfile(firebaseUser.uid)
         setProfile(profileData)
         if (profileData?.language) {
           localStorage.setItem('lang', profileData.language)
