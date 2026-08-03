@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore'
+import { collection, query, where, getDocs, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../lib/AuthContext'
 
@@ -15,27 +15,20 @@ export default function Home() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    async function fetchHunts() {
+    if (!user || profile === undefined) return
+
+    const q = profile?.isAdmin
+      ? query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
+      : query(collection(db, 'hunts'), where('allowedUsers', 'array-contains', user.uid))
+
+    const unsub = onSnapshot(q, async (snap) => {
       try {
-        let data = []
-        if (profile?.isAdmin) {
-          // Admins: fetch all active hunts ordered by date
-          const q = query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
-          const snap = await getDocs(q)
-          data = await Promise.all(snap.docs.map(async d => {
-            const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
-            return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
-          }))
-        } else {
-          // Players: query only hunts they're in (single array-contains, no composite index needed)
-          // then filter active ones on the client
-          const q = query(collection(db, 'hunts'), where('allowedUsers', 'array-contains', user.uid))
-          const snap = await getDocs(q)
-          const all = await Promise.all(snap.docs.map(async d => {
-            const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
-            return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
-          }))
-          data = all
+        let data = await Promise.all(snap.docs.map(async d => {
+          const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
+          return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
+        }))
+        if (!profile?.isAdmin) {
+          data = data
             .filter(h => h.isActive)
             .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
         }
@@ -45,8 +38,12 @@ export default function Home() {
       } finally {
         setLoading(false)
       }
-    }
-    if (user && profile !== undefined) fetchHunts()
+    }, (err) => {
+      console.error('hunts snapshot error:', err)
+      setLoading(false)
+    })
+
+    return unsub
   }, [user, profile])
 
   if (loading) return <div className="page" style={{ display:'flex', justifyContent:'center', paddingTop:'4rem' }}><div className="spinner" /></div>
