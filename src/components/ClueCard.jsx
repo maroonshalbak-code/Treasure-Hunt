@@ -156,8 +156,9 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
   const diff = clue.difficulty || 1
   const accentColor = DIFF_COLORS[diff - 1]
 
-  const cardBg = completed ? '#dcfce7' : pending ? '#fef9c3' : 'var(--surface)'
-  const cardBorderColor = completed ? '#86efac' : pending ? '#fde047' : 'var(--border)'
+  // Status drives the left border color — visible on any theme
+  const statusColor = completed ? '#22c55e' : pending ? '#f97316' : 'var(--border)'
+  const statusBg = completed ? 'rgba(34,197,94,0.08)' : pending ? 'rgba(249,115,22,0.08)' : 'var(--surface)'
 
   // ── COLLAPSED TILE ──────────────────────────────────────────────
   if (!expanded) {
@@ -166,9 +167,9 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
         onClick={() => setExpanded(true)}
         className="clue-tile"
         style={{
-          background: cardBg,
-          border: `2px solid ${cardBorderColor}`,
-          borderLeft: `4px solid ${accentColor}`,
+          background: statusBg,
+          border: `1.5px solid ${statusColor}`,
+          borderLeft: `4px solid ${statusColor}`,
         }}
       >
         {/* Top row: type + status */}
@@ -176,9 +177,9 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
           <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`} style={{ fontSize: 10, padding: '2px 7px' }}>
             {TYPE_EMOJI[clue.clueType]} {typeLabels[clue.clueType]}
           </span>
-          {completed && <span style={{ fontSize: 17 }} title={t('clue.statusDone')}>✅</span>}
-          {pending && !completed && <span style={{ fontSize: 17 }} title={t('clue.statusReview')}>⏳</span>}
-          {!completed && !pending && <span style={{ fontSize: 15, color: 'var(--text3)' }} title={t('clue.statusOpen')}>○</span>}
+          {completed && <span style={{ fontSize: 13, fontWeight: 800, color: '#22c55e', background: 'rgba(34,197,94,0.15)', borderRadius: 20, padding: '2px 8px' }}>✓ {t('clue.statusDone')}</span>}
+          {pending && !completed && <span style={{ fontSize: 13, fontWeight: 800, color: '#f97316', background: 'rgba(249,115,22,0.15)', borderRadius: 20, padding: '2px 8px' }}>⏳ {t('clue.statusReview')}</span>}
+          {!completed && !pending && <span style={{ fontSize: 13, color: 'var(--text3)', background: 'var(--surface2)', borderRadius: 20, padding: '2px 8px' }}>○ {t('clue.statusOpen')}</span>}
         </div>
 
         {/* Title */}
@@ -204,9 +205,9 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
     <div
       className="clue-tile-expanded"
       style={{
-        background: cardBg,
-        border: `2px solid ${cardBorderColor}`,
-        borderLeft: `4px solid ${accentColor}`,
+        background: statusBg,
+        border: `1.5px solid ${statusColor}`,
+        borderLeft: `4px solid ${statusColor}`,
       }}
     >
       {/* Header */}
