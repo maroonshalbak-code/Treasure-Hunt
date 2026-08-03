@@ -342,25 +342,24 @@ export default function Admin() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {hunts.length === 0 && <p style={{ color: 'var(--text3)' }}>No hunts yet. Create one.</p>}
           {hunts.map(hunt => (
-            <div key={hunt.id} className="card" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                  <span style={{ fontWeight: 600 }}>{hunt.title}</span>
-                  <span className={`badge ${hunt.isActive ? 'badge-success' : 'badge-gray'}`}>
-                    {hunt.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                  {hunt.mode === 'teams' && <span className="badge badge-gold">Teams</span>}
-                </div>
-                <span style={{ fontSize: 13, color: 'var(--text3)' }}>
-                  {hunt.clueCount} clues · {(hunt.allowedUsers || []).length} participants
+            <div key={hunt.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                <span style={{ fontWeight: 700, fontSize: 15 }}>{hunt.title}</span>
+                <span className={`badge ${hunt.isActive ? 'badge-success' : 'badge-gray'}`}>
+                  {hunt.isActive ? 'Active' : 'Inactive'}
+                </span>
+                {hunt.mode === 'teams' && <span className="badge badge-gold">Teams</span>}
+                <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 'auto' }}>
+                  {hunt.clueCount} clues · {(hunt.allowedUsers || []).length} players
                 </span>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('participants') }}>Participants</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('clues') }}>Clues</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('reviews'); fetchReviews(hunt.id) }}>Reviews</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => toggleHunt(hunt)}>{hunt.isActive ? 'Deactivate' : 'Activate'}</button>
-                <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => deleteHunt(hunt.id)}>Delete</button>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('participants') }}>👥 Participants</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('clues') }}>🗝️ Clues</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('reviews'); fetchReviews(hunt.id) }}>📸 Reviews</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('images'); fetchHuntImages(hunt.id) }}>🖼️ Images</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => toggleHunt(hunt)}>{hunt.isActive ? '⏸ Deactivate' : '▶ Activate'}</button>
+                <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => deleteHunt(hunt.id)}>🗑️ Delete</button>
               </div>
             </div>
           ))}

@@ -157,6 +157,10 @@ input:focus, textarea:focus, select:focus {
 /* === Layout === */
 .page { max-width: 680px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 .page-wide { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+@media (max-width: 640px) {
+  .page, .page-wide { padding: 1rem 0.75rem 4rem; }
+  .page-wide { display: block !important; }
+}
 
 /* === Nav === */
 nav {
@@ -227,7 +231,8 @@ nav {
 .star-btn:hover { transform: scale(1.2); }
 
 /* === Tabs === */
-.tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; gap: 0; }
+.tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; gap: 0; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.tab-bar::-webkit-scrollbar { display: none; }
 .tab {
   padding: 0.65rem 1.25rem;
   font-size: 14px; font-weight: 700;
