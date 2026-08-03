@@ -328,7 +328,8 @@ export default function Admin() {
       const link = `${window.location.origin}/join/${token}`
       openWhatsApp(`🏴‍☠️ You're invited to join the treasure hunt!\n\nCreate your free account here:\n${link}\n\n(Link valid for 30 days)`)
     } catch (err) {
-      setMsg({ type: 'error', text: 'Failed to generate invite link.' })
+      setMsg({ type: 'error', text: err.message || 'Failed to generate invite link.' })
+      console.error('Invite link error:', err)
     }
     setGeneratingLink(false)
   }
@@ -357,7 +358,8 @@ export default function Admin() {
       setShowCreatePlayer(false)
       setShowPlayerPassword(false)
     } catch (err) {
-      setMsg({ type: 'error', text: 'Failed to create player invite.' })
+      setMsg({ type: 'error', text: err.message || 'Failed to create player invite.' })
+      console.error('Create player error:', err)
     }
     setCreatingPlayer(false)
   }
