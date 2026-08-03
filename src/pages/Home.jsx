@@ -13,6 +13,7 @@ export default function Home() {
   const navigate = useNavigate()
   const [hunts, setHunts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [debugInfo, setDebugInfo] = useState(null)
 
   useEffect(() => {
     if (!user || profile === undefined) return
@@ -27,9 +28,23 @@ export default function Home() {
           return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
         }))
         // Filter active hunts; players also filtered to their assigned hunts
-        data = data.filter(h => h.isActive)
+        const allActive = data.filter(h => h.isActive)
+        const debug = {
+          uid: user.uid,
+          totalHunts: data.length,
+          activeHunts: allActive.length,
+          hunts: allActive.map(h => ({
+            title: h.title,
+            isActive: h.isActive,
+            inAllowed: (h.allowedUsers || []).includes(user.uid),
+            allowedCount: (h.allowedUsers || []).length,
+          }))
+        }
+        setDebugInfo(debug)
         if (!profile?.isAdmin) {
-          data = data.filter(h => (h.allowedUsers || []).includes(user.uid))
+          data = allActive.filter(h => (h.allowedUsers || []).includes(user.uid))
+        } else {
+          data = allActive
         }
         setHunts(data)
       } catch (err) {
@@ -39,6 +54,7 @@ export default function Home() {
       }
     }, (err) => {
       console.error('hunts snapshot error:', err)
+      setDebugInfo({ error: err.message })
       setLoading(false)
     })
 
@@ -49,6 +65,18 @@ export default function Home() {
 
   return (
     <div className="page">
+      {debugInfo && (
+        <div style={{ background:'#1a1a2e', color:'#00ff88', fontFamily:'monospace', fontSize:11, padding:'0.75rem', borderRadius:8, marginBottom:'1rem', wordBreak:'break-all' }}>
+          <strong>🔍 DEBUG</strong><br/>
+          UID: {debugInfo.uid}<br/>
+          {debugInfo.error ? <>Error: {debugInfo.error}</> : <>
+            Total hunts in DB: {debugInfo.totalHunts} | Active: {debugInfo.activeHunts}<br/>
+            {debugInfo.hunts?.map((h,i) => (
+              <span key={i}>Hunt "{h.title}": active={String(h.isActive)} inAllowed={String(h.inAllowed)} ({h.allowedCount} users)<br/></span>
+            ))}
+          </>}
+        </div>
+      )}
       <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
         <div style={{ fontSize: 52, marginBottom: 8 }}>🗺️</div>
         <h1 style={{ fontSize: 26, fontWeight: 900, marginBottom: 6, color: 'var(--primary)' }}>
