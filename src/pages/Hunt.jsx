@@ -63,22 +63,22 @@ export default function Hunt() {
         setParticipants(profileSnaps.docs.map(d => ({ id: d.id, ...d.data() })))
       }
 
-      // Real-time listener for this player's progress
+      // Real-time listener for ALL players' progress in this hunt
+      // A clue is "completed" if any player solved it; "pending" if the current user submitted and awaits review
       let isFirstSnapshot = true
       progressUnsub = onSnapshot(
         query(
           collection(db, 'playerProgress'),
-          where('playerId', '==', user.uid),
           where('huntId', '==', huntId)
         ),
         (snap) => {
           const completed = new Set()
           const pending = new Set()
           snap.docs.forEach(d => {
-            const { clueId, status } = d.data()
-            if (status === 'pending') pending.add(clueId)
-            else if (status === 'rejected') { /* allow resubmit */ }
-            else completed.add(clueId)
+            const { clueId, status, playerId } = d.data()
+            if (status === 'approved') completed.add(clueId)
+            else if (status === 'pending' && playerId === user.uid) pending.add(clueId)
+            // rejected: allow current user to resubmit (don't add to either set)
           })
           setCompletedIds(completed)
           setPendingIds(pending)
