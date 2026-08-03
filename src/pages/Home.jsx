@@ -17,16 +17,28 @@ export default function Home() {
   useEffect(() => {
     async function fetchHunts() {
       try {
-        // Admins see all active hunts; players only query hunts they're in
-        // (using array-contains avoids Firestore permission errors on the query)
-        const q = profile?.isAdmin
-          ? query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
-          : query(collection(db, 'hunts'), where('isActive', '==', true), where('allowedUsers', 'array-contains', user.uid), orderBy('createdAt', 'desc'))
-        const snap = await getDocs(q)
-        const data = await Promise.all(snap.docs.map(async d => {
-          const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
-          return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
-        }))
+        let data = []
+        if (profile?.isAdmin) {
+          // Admins: fetch all active hunts ordered by date
+          const q = query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
+          const snap = await getDocs(q)
+          data = await Promise.all(snap.docs.map(async d => {
+            const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
+            return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
+          }))
+        } else {
+          // Players: query only hunts they're in (single array-contains, no composite index needed)
+          // then filter active ones on the client
+          const q = query(collection(db, 'hunts'), where('allowedUsers', 'array-contains', user.uid))
+          const snap = await getDocs(q)
+          const all = await Promise.all(snap.docs.map(async d => {
+            const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
+            return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
+          }))
+          data = all
+            .filter(h => h.isActive)
+            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+        }
         setHunts(data)
       } catch (err) {
         console.error('fetchHunts error:', err)
