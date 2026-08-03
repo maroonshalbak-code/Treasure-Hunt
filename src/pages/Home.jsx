@@ -17,9 +17,8 @@ export default function Home() {
   useEffect(() => {
     if (!user || profile === undefined) return
 
-    const q = profile?.isAdmin
-      ? query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
-      : query(collection(db, 'hunts'), where('allowedUsers', 'array-contains', user.uid))
+    // All authenticated users can read hunts (rules allow it); filter in client
+    const q = query(collection(db, 'hunts'), where('isActive', '==', true), orderBy('createdAt', 'desc'))
 
     const unsub = onSnapshot(q, async (snap) => {
       try {
@@ -27,10 +26,9 @@ export default function Home() {
           const cluesSnap = await getDocs(collection(db, 'hunts', d.id, 'clues'))
           return { id: d.id, ...d.data(), clueCount: cluesSnap.size }
         }))
+        // Admins see all; players only see hunts they're assigned to
         if (!profile?.isAdmin) {
-          data = data
-            .filter(h => h.isActive)
-            .sort((a, b) => (b.createdAt?.toMillis?.() || 0) - (a.createdAt?.toMillis?.() || 0))
+          data = data.filter(h => (h.allowedUsers || []).includes(user.uid))
         }
         setHunts(data)
       } catch (err) {

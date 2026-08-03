@@ -15,11 +15,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Any authenticated user can read hunts — filtering by allowedUsers happens in the app
     match /hunts/{huntId} {
-      allow read: if request.auth != null && (
-        isAdmin() ||
-        (resource.data.isActive == true && request.auth.uid in resource.data.allowedUsers)
-      );
+      allow read: if request.auth != null;
       allow write: if isAdmin();
 
       match /clues/{clueId} {
@@ -34,9 +32,6 @@ service cloud.firestore {
       allow update, delete: if isAdmin();
     }
 
-    // Any logged-in user can create invites (admin gate is in the UI);
-    // publicly readable so recipients don't need an account to open the link;
-    // anyone can mark a pending invite as used (the Join page activation flow)
     match /invites/{token} {
       allow read: if true;
       allow create: if request.auth != null;
