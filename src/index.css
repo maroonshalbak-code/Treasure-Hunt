@@ -202,7 +202,26 @@ nav {
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
 /* === Clue grid === */
-.clue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+.clue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(155px, 1fr)); gap: 0.75rem; }
+
+/* Compact clue tile */
+.clue-tile {
+  border-radius: var(--radius);
+  padding: 0.75rem 0.85rem;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: box-shadow 0.2s, transform 0.15s;
+  user-select: none;
+}
+.clue-tile:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+
+/* Expanded clue card — spans full width */
+.clue-tile-expanded {
+  grid-column: 1 / -1;
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  box-shadow: var(--shadow-hover);
+}
 
 /* === Progress bar === */
 .progress-bar-wrap { background: var(--surface2); border: 1px solid var(--border); border-radius: 99px; height: 10px; overflow: hidden; }

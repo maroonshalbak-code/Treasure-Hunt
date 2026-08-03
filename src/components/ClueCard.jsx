@@ -8,13 +8,15 @@ const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
 const TYPE_BADGE = { text: 'badge-text', gps: 'badge-gps', qr: 'badge-qr', image: 'badge-image' }
+const TYPE_EMOJI = { text: '💬', gps: '📍', qr: '📷', image: '🖼️' }
 const DIFF_CLASS = { 1: 'diff-1', 2: 'diff-2', 3: 'diff-3', 4: 'diff-4', 5: 'diff-5' }
 const DIFF_LABEL = { 1: 'Easy', 2: 'Medium', 3: 'Hard', 4: 'Very Hard', 5: 'Expert' }
+const DIFF_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#ef4444', '#8b5cf6']
 
 export default function ClueCard({ clue, completed, pending, onComplete }) {
   const { user, profile } = useAuth()
   const { t } = useTranslation()
-  const [open, setOpen] = useState(false)
+  const [expanded, setExpanded] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [success, setSuccess] = useState(null)
@@ -22,6 +24,7 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
   const [gpsStatus, setGpsStatus] = useState(null)
   const [qrInput, setQrInput] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
+  const [submitOpen, setSubmitOpen] = useState(false)
   const html5QrcodeRef = useRef(null)
   const proofRef = useRef()
 
@@ -35,7 +38,6 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
       where('clueId', '==', clue.id)
     ))
 
-    // If a doc exists and was rejected, allow resubmission by updating it
     if (!existingSnap.empty) {
       const existingDoc = existingSnap.docs[0]
       const existingStatus = existingDoc.data().status
@@ -49,7 +51,6 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
         setLoading(false)
         return
       }
-      // Already pending or approved — don't allow another submission
       setError(t('clue.alreadyDone'))
       setLoading(false)
       return
@@ -153,31 +154,81 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
   const typeLabels = { text: t('clue.riddle'), gps: t('clue.gps'), qr: t('clue.qr'), image: t('clue.image') }
   const isDone = completed || pending
   const diff = clue.difficulty || 1
+  const accentColor = DIFF_COLORS[diff - 1]
 
-  const cardStyle = completed
-    ? { background: '#dcfce7', borderColor: '#86efac' }
-    : pending
-      ? { background: '#fef9c3', borderColor: '#fde047' }
-      : { borderLeft: `4px solid ${['#22c55e','#3b82f6','#f97316','#ef4444','#8b5cf6'][diff-1]}` }
+  const cardBg = completed ? '#dcfce7' : pending ? '#fef9c3' : 'var(--surface)'
+  const cardBorderColor = completed ? '#86efac' : pending ? '#fde047' : 'var(--border)'
 
-  return (
-    <div className="card" style={cardStyle}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8, marginBottom: 10 }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`}>{typeLabels[clue.clueType]}</span>
-          <span className={`badge ${DIFF_CLASS[diff]}`}>
-            {'⭐'.repeat(diff)} {DIFF_LABEL[diff]}
+  // ── COLLAPSED TILE ──────────────────────────────────────────────
+  if (!expanded) {
+    return (
+      <div
+        onClick={() => setExpanded(true)}
+        className="clue-tile"
+        style={{
+          background: cardBg,
+          border: `2px solid ${cardBorderColor}`,
+          borderLeft: `4px solid ${accentColor}`,
+        }}
+      >
+        {/* Top row: type + status */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+          <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`} style={{ fontSize: 10, padding: '2px 7px' }}>
+            {TYPE_EMOJI[clue.clueType]} {typeLabels[clue.clueType]}
           </span>
-          <span className="badge badge-gold">{t('clue.points', { points: clue.points })}</span>
+          {completed && <span style={{ fontSize: 17 }} title="Completed">✅</span>}
+          {pending && !completed && <span style={{ fontSize: 17 }} title="Pending review">⏳</span>}
+          {!completed && !pending && <span style={{ fontSize: 15, color: 'var(--text3)' }} title="Open">○</span>}
         </div>
-        {completed && <span className="badge badge-success">✓ {t('clue.found')}</span>}
-        {pending && !completed && <span className="badge badge-pending">{t('clue.pendingReview')}</span>}
+
+        {/* Title */}
+        <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--primary)', lineHeight: 1.3, marginBottom: 8 }}>
+          {clue.title}
+        </div>
+
+        {/* Bottom row: difficulty + points */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span className={`badge ${DIFF_CLASS[diff]}`} style={{ fontSize: 10, padding: '2px 7px' }}>
+            {'⭐'.repeat(diff)}
+          </span>
+          <span className="badge badge-gold" style={{ fontSize: 10, padding: '2px 7px' }}>
+            {clue.points} pts
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  // ── EXPANDED CARD ───────────────────────────────────────────────
+  return (
+    <div
+      className="clue-tile-expanded"
+      style={{
+        background: cardBg,
+        border: `2px solid ${cardBorderColor}`,
+        borderLeft: `4px solid ${accentColor}`,
+      }}
+    >
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+          <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`}>
+            {TYPE_EMOJI[clue.clueType]} {typeLabels[clue.clueType]}
+          </span>
+          <span className={`badge ${DIFF_CLASS[diff]}`}>{'⭐'.repeat(diff)} {DIFF_LABEL[diff]}</span>
+          <span className="badge badge-gold">{t('clue.points', { points: clue.points })}</span>
+          {completed && <span className="badge badge-success">✓ {t('clue.found')}</span>}
+          {pending && !completed && <span className="badge badge-pending">{t('clue.pendingReview')}</span>}
+        </div>
+        <button
+          onClick={() => { setExpanded(false); setSubmitOpen(false); setError(null); setSuccess(null) }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: 'var(--text3)', padding: '0 2px', lineHeight: 1, flexShrink: 0 }}
+        >✕</button>
       </div>
 
       <h3 style={{ fontWeight: 800, fontSize: 16, marginBottom: 6, color: 'var(--primary)' }}>{clue.title}</h3>
       <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 12, lineHeight: 1.6 }}>{clue.riddle}</p>
 
-      {/* Image hint preview (always shown for image clues) */}
       {clue.clueType === 'image' && clue.imageUrl && (
         <img
           src={clue.imageUrl}
@@ -187,23 +238,24 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
         />
       )}
 
-      {!isDone && (
+      {success && <div className="alert alert-success" style={{ marginBottom: 8 }}>{success}</div>}
+
+      {!isDone && !submitOpen && (
         <button className="btn-ghost" style={{ fontSize: 13, width: '100%' }}
-          onClick={() => { setOpen(o => !o); setError(null); setSuccess(null) }}>
-          {open ? t('clue.hide') : (clue.clueType === 'image' ? t('clue.submitPhoto') : t('clue.submit'))}
+          onClick={() => { setSubmitOpen(true); setError(null) }}>
+          {clue.clueType === 'image' ? t('clue.submitPhoto') : t('clue.submit')}
         </button>
       )}
 
-      {open && !isDone && (
-        <div style={{ marginTop: 12 }}>
+      {submitOpen && !isDone && (
+        <div style={{ marginTop: 8 }}>
           {error && <div className="alert alert-error" style={{ marginBottom: 8 }}>{error}</div>}
-          {success && <div className="alert alert-success" style={{ marginBottom: 8 }}>{success}</div>}
 
           {clue.clueType === 'text' && (
             <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: 8 }}>
               <input placeholder={t('clue.yourAnswer')} value={answer} onChange={e => setAnswer(e.target.value)} required />
               <button className="btn-primary" type="submit" disabled={loading} style={{ flexShrink: 0, padding: '0.5rem 1rem' }}>
-                {loading ? <span className="spinner" style={{ width:14, height:14 }} /> : t('clue.check')}
+                {loading ? <span className="spinner" style={{ width: 14, height: 14 }} /> : t('clue.check')}
               </button>
             </form>
           )}

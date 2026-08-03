@@ -23,6 +23,9 @@ export default function Hunt() {
   const [tab, setTab] = useState('clues')
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState([])
+  const [complexityFilter, setComplexityFilter] = useState(0)   // 0 = all, 1-5
+  const [statusFilter, setStatusFilter] = useState('all')        // all | open | pending | completed
+  const [typeFilter, setTypeFilter] = useState('all')            // all | text | gps | qr | image
 
   function pushNotification(type, clueTitle) {
     const id = Date.now() + Math.random()
@@ -170,27 +173,126 @@ export default function Hunt() {
 
         {tab === 'clues' && (
           <div>
+            {/* Filter bar */}
+            <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {/* Status filters */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>STATUS</span>
+                {[
+                  { key: 'all', label: 'All' },
+                  { key: 'open', label: '○ Open' },
+                  { key: 'pending', label: '⏳ Pending' },
+                  { key: 'completed', label: '✅ Done' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setStatusFilter(key)}
+                    style={{
+                      fontSize: 12, padding: '4px 12px', borderRadius: 99,
+                      fontWeight: 700, cursor: 'pointer',
+                      background: statusFilter === key ? 'var(--primary)' : 'var(--surface)',
+                      color: statusFilter === key ? '#fff' : 'var(--text2)',
+                      border: statusFilter === key ? '2px solid var(--primary)' : '2px solid var(--border)',
+                      transition: 'all 0.15s',
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+
+              {/* Type filters */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>TYPE</span>
+                {[
+                  { key: 'all', label: 'All' },
+                  { key: 'text', label: '💬 Riddle' },
+                  { key: 'gps', label: '📍 GPS' },
+                  { key: 'qr', label: '📷 QR' },
+                  { key: 'image', label: '🖼️ Image' },
+                ].map(({ key, label }) => (
+                  <button
+                    key={key}
+                    onClick={() => setTypeFilter(key)}
+                    style={{
+                      fontSize: 12, padding: '4px 12px', borderRadius: 99,
+                      fontWeight: 700, cursor: 'pointer',
+                      background: typeFilter === key ? 'var(--primary)' : 'var(--surface)',
+                      color: typeFilter === key ? '#fff' : 'var(--text2)',
+                      border: typeFilter === key ? '2px solid var(--primary)' : '2px solid var(--border)',
+                      transition: 'all 0.15s',
+                    }}
+                  >{label}</button>
+                ))}
+              </div>
+
+              {/* Complexity filters */}
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>LEVEL</span>
+                <button
+                  onClick={() => setComplexityFilter(0)}
+                  style={{
+                    fontSize: 12, padding: '4px 12px', borderRadius: 99,
+                    fontWeight: 700, cursor: 'pointer',
+                    background: complexityFilter === 0 ? 'var(--primary)' : 'var(--surface)',
+                    color: complexityFilter === 0 ? '#fff' : 'var(--text2)',
+                    border: complexityFilter === 0 ? '2px solid var(--primary)' : '2px solid var(--border)',
+                    transition: 'all 0.15s',
+                  }}
+                >All</button>
+                {[1, 2, 3, 4, 5].map(n => (
+                  <button
+                    key={n}
+                    onClick={() => setComplexityFilter(n)}
+                    style={{
+                      fontSize: 13, padding: '4px 10px', borderRadius: 99,
+                      fontWeight: 700, cursor: 'pointer',
+                      background: complexityFilter === n ? 'var(--primary)' : 'var(--surface)',
+                      color: complexityFilter === n ? '#fff' : 'var(--text2)',
+                      border: complexityFilter === n ? '2px solid var(--primary)' : '2px solid var(--border)',
+                      transition: 'all 0.15s',
+                    }}
+                  >{'⭐'.repeat(n)}</button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clue grid */}
             {clues.length === 0 ? (
               <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '3rem' }}>
                 {t('hunt.noClues')}
               </div>
-            ) : (
-              <div className="clue-grid">
-                {[
-                  ...clues.filter(c => !completedIds.has(c.id) && !pendingIds.has(c.id)),
-                  ...clues.filter(c => pendingIds.has(c.id)),
-                  ...clues.filter(c => completedIds.has(c.id)),
-                ].map(clue => (
-                  <ClueCard
-                    key={clue.id}
-                    clue={{ ...clue, huntId }}
-                    completed={completedIds.has(clue.id)}
-                    pending={pendingIds.has(clue.id)}
-                    onComplete={handleComplete}
-                  />
-                ))}
-              </div>
-            )}
+            ) : (() => {
+              const sorted = [
+                ...clues.filter(c => !completedIds.has(c.id) && !pendingIds.has(c.id)),
+                ...clues.filter(c => pendingIds.has(c.id)),
+                ...clues.filter(c => completedIds.has(c.id)),
+              ]
+              const filtered = sorted.filter(c => {
+                if (complexityFilter !== 0 && (c.difficulty || 1) !== complexityFilter) return false
+                if (typeFilter !== 'all' && c.clueType !== typeFilter) return false
+                if (statusFilter === 'open' && (completedIds.has(c.id) || pendingIds.has(c.id))) return false
+                if (statusFilter === 'pending' && !pendingIds.has(c.id)) return false
+                if (statusFilter === 'completed' && !completedIds.has(c.id)) return false
+                return true
+              })
+              if (filtered.length === 0) return (
+                <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '2rem', fontSize: 14 }}>
+                  No clues match these filters
+                </div>
+              )
+              return (
+                <div className="clue-grid">
+                  {filtered.map(clue => (
+                    <ClueCard
+                      key={clue.id}
+                      clue={{ ...clue, huntId }}
+                      completed={completedIds.has(clue.id)}
+                      pending={pendingIds.has(clue.id)}
+                      onComplete={handleComplete}
+                    />
+                  ))}
+                </div>
+              )
+            })()}
           </div>
         )}
 
