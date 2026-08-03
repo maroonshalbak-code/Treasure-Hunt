@@ -21,6 +21,7 @@ export default function Hunt() {
   const [pendingIds, setPendingIds] = useState(new Set())
   const [participants, setParticipants] = useState([])
   const [tab, setTab] = useState('clues')
+  const [debugProgress, setDebugProgress] = useState([])
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState([])
   const [complexityFilter, setComplexityFilter] = useState(0)   // 0 = all, 1-5
@@ -74,12 +75,15 @@ export default function Hunt() {
         (snap) => {
           const completed = new Set()
           const pending = new Set()
+          const rawDocs = []
           snap.docs.forEach(d => {
-            const { clueId, status, playerId } = d.data()
+            const { clueId, status, playerId, huntId: hid } = d.data()
+            rawDocs.push({ clueId, status, playerId: playerId?.slice(-6), huntId: hid })
             if (status === 'approved') completed.add(clueId)
             else if (status === 'pending' && playerId === user.uid) pending.add(clueId)
             // rejected: allow current user to resubmit (don't add to either set)
           })
+          setDebugProgress(rawDocs)
           setCompletedIds(completed)
           setPendingIds(pending)
 
@@ -132,6 +136,10 @@ export default function Hunt() {
   return (
     <div className="page-wide" style={{ display: 'grid', gridTemplateColumns: '1fr 220px', gap: '1.5rem', alignItems: 'start' }}>
       <div>
+        <div style={{ background:'#1a1a2e', color:'#00ff88', fontFamily:'monospace', fontSize:10, padding:'0.5rem', borderRadius:6, marginBottom:8, wordBreak:'break-all' }}>
+          <strong>DEBUG</strong> uid:{user?.uid?.slice(-6)} huntId:{huntId?.slice(-6)} docs:{debugProgress.length}<br/>
+          {debugProgress.map((d,i) => <span key={i}>[{d.status}] clue:{d.clueId?.slice(-6)} by:{d.playerId}<br/></span>)}
+        </div>
         <div style={{ marginBottom: '1.5rem' }}>
           <button className="btn-ghost" style={{ fontSize: 12, marginBottom: 12 }} onClick={() => navigate('/')}>
             {t('hunt.back')}
