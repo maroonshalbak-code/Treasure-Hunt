@@ -91,7 +91,9 @@
     "diffMedium": "בינוני",
     "diffHard": "קשה",
     "diffVeryHard": "קשה מאוד",
-    "diffExpert": "מומחה"
+    "diffExpert": "מומחה",
+    "date": "תאריך",
+    "wrongDate": "תאריך שגוי, נסה שוב!"
   },
   "leaderboard": {
     "empty": "אף אחד עדיין לא מצא רמז. היה הראשון!",

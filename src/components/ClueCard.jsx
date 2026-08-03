@@ -7,8 +7,8 @@ import { useAuth } from '../lib/AuthContext'
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-const TYPE_BADGE = { text: 'badge-text', gps: 'badge-gps', qr: 'badge-qr', image: 'badge-image' }
-const TYPE_EMOJI = { text: '💬', gps: '📍', qr: '📷', image: '🖼️' }
+const TYPE_BADGE = { text: 'badge-text', gps: 'badge-gps', qr: 'badge-qr', image: 'badge-image', date: 'badge-text' }
+const TYPE_EMOJI = { text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅' }
 const DIFF_CLASS = { 1: 'diff-1', 2: 'diff-2', 3: 'diff-3', 4: 'diff-4', 5: 'diff-5' }
 const DIFF_KEY = { 1: 'clue.diffEasy', 2: 'clue.diffMedium', 3: 'clue.diffHard', 4: 'clue.diffVeryHard', 5: 'clue.diffExpert' }
 const DIFF_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#ef4444', '#8b5cf6']
@@ -23,6 +23,7 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
   const [answer, setAnswer] = useState('')
   const [gpsStatus, setGpsStatus] = useState(null)
   const [qrInput, setQrInput] = useState('')
+  const [dateInput, setDateInput] = useState('')
   const [scannerOpen, setScannerOpen] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
   const html5QrcodeRef = useRef(null)
@@ -90,8 +91,23 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
 
   async function handleTextSubmit(e) {
     e.preventDefault(); setError(null)
-    if (answer.trim().toLowerCase() !== clue.answer?.toLowerCase()) {
+    // Support both old single `answer` and new `answers` array
+    const accepted = clue.answers?.length
+      ? clue.answers.map(a => a.toLowerCase().trim())
+      : [clue.answer?.toLowerCase().trim()]
+    if (!accepted.includes(answer.trim().toLowerCase())) {
       setError(t('clue.wrongAnswer')); return
+    }
+    await markComplete()
+  }
+
+  async function handleDateSubmit(e) {
+    e.preventDefault(); setError(null)
+    const target = new Date(clue.targetDate)
+    const submitted = new Date(dateInput)
+    const diffDays = Math.abs((submitted - target) / (1000 * 60 * 60 * 24))
+    if (diffDays > (clue.dateTolerance || 0)) {
+      setError(t('clue.wrongDate')); return
     }
     await markComplete()
   }
@@ -162,7 +178,7 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
     }
   }
 
-  const typeLabels = { text: t('clue.riddle'), gps: t('clue.gps'), qr: t('clue.qr'), image: t('clue.image') }
+  const typeLabels = { text: t('clue.riddle'), gps: t('clue.gps'), qr: t('clue.qr'), image: t('clue.image'), date: t('clue.date') }
   const isDone = completed || pending
   const diff = clue.difficulty || 1
   const accentColor = DIFF_COLORS[diff - 1]
@@ -313,6 +329,15 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
                 {loading ? t('clue.uploading') : t('clue.takePhoto')}
               </button>
             </div>
+          )}
+
+          {clue.clueType === 'date' && (
+            <form onSubmit={handleDateSubmit} style={{ display: 'flex', gap: 8 }}>
+              <input type="date" required value={dateInput} onChange={e => setDateInput(e.target.value)} />
+              <button className="btn-primary" type="submit" disabled={loading} style={{ flexShrink: 0, padding: '0.5rem 1rem' }}>
+                {loading ? <span className="spinner" style={{ width: 14, height: 14 }} /> : t('clue.check')}
+              </button>
+            </form>
           )}
         </div>
       )}

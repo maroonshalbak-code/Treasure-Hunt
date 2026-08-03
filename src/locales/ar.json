@@ -91,7 +91,9 @@
     "diffMedium": "متوسط",
     "diffHard": "صعب",
     "diffVeryHard": "صعب جداً",
-    "diffExpert": "خبير"
+    "diffExpert": "خبير",
+    "date": "تاريخ",
+    "wrongDate": "تاريخ خاطئ، حاول مرة أخرى!"
   },
   "leaderboard": {
     "empty": "لم يجد أحد دليلاً بعد. كن الأول!",

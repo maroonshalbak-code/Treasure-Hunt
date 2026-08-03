@@ -45,8 +45,8 @@ async function destroyCloudinaryImage(url) {
   if (data.result !== 'ok' && data.result !== 'not found') throw new Error(data.result || 'Cloudinary error')
 }
 
-const CLUE_TYPES = ['text', 'gps', 'qr', 'image']
-const CLUE_TYPE_ICONS = { text: '💬', gps: '📍', qr: '📷', image: '🖼️' }
+const CLUE_TYPES = ['text', 'gps', 'qr', 'image', 'date']
+const CLUE_TYPE_ICONS = { text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅' }
 const TEAM_COLORS = ['#3498db', '#e74c3c']
 const DIFFICULTY_LABELS = { 1: '⭐ Easy', 2: '⭐⭐ Medium', 3: '⭐⭐⭐ Hard', 4: '⭐⭐⭐⭐ Very Hard', 5: '⭐⭐⭐⭐⭐ Expert' }
 const DIFFICULTY_COLORS = { 1: '#15803d', 2: '#1d4ed8', 3: '#b45309', 4: '#c2410c', 5: '#7e22ce' }
@@ -87,8 +87,9 @@ export default function Admin() {
     mode: 'individual', teamAName: 'Team A', teamBName: 'Team B'
   })
   const [newClue, setNewClue] = useState({
-    title: '', riddle: '', clueType: 'text', answer: '',
-    lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1
+    title: '', riddle: '', clueType: 'text', answers: [''],
+    lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1,
+    targetDate: '', dateTolerance: 0
   })
 
   useEffect(() => { fetchHunts() }, [])
@@ -235,17 +236,21 @@ export default function Admin() {
         points: DIFFICULTY_POINTS[newClue.difficulty],
         displayOrder: clues.length,
       }
-      if (newClue.clueType === 'text') payload.answer = newClue.answer.toLowerCase().trim()
+      if (newClue.clueType === 'text') payload.answers = newClue.answers.map(a => a.toLowerCase().trim()).filter(Boolean)
       if (newClue.clueType === 'gps') {
         payload.lat = parseFloat(newClue.lat); payload.lng = parseFloat(newClue.lng)
         payload.gpsRadiusMeters = Number(newClue.gpsRadiusMeters)
       }
       if (newClue.clueType === 'qr') payload.qrToken = token
       if (newClue.clueType === 'image') payload.imageUrl = clueImageUrl
+      if (newClue.clueType === 'date') {
+        payload.targetDate = newClue.targetDate
+        payload.dateTolerance = Number(newClue.dateTolerance)
+      }
 
       await addDoc(collection(db, 'hunts', selectedHunt.id, 'clues'), payload)
       setMsg({ type: 'success', text: t('admin.clues.added') })
-      setNewClue({ title: '', riddle: '', clueType: 'text', answer: '', lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1 })
+      setNewClue({ title: '', riddle: '', clueType: 'text', answers: [''], lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1, targetDate: '', dateTolerance: 0 })
       setClueImageUrl(null)
 
       if (newClue.clueType === 'qr') {
@@ -750,7 +755,25 @@ export default function Admin() {
               {newClue.clueType === 'text' && (
                 <div className="form-group">
                   <label>{t('admin.clues.labelAnswer')}</label>
-                  <input placeholder={t('admin.clues.placeholderAnswer')} required value={newClue.answer} onChange={e => setNewClue(p => ({...p, answer: e.target.value}))} />
+                  {newClue.answers.map((ans, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                      <input
+                        placeholder={t('admin.clues.placeholderAnswer')}
+                        required={i === 0}
+                        value={ans}
+                        onChange={e => setNewClue(p => {
+                          const answers = [...p.answers]
+                          answers[i] = e.target.value
+                          return { ...p, answers }
+                        })}
+                      />
+                      <button type="button" onClick={() => setNewClue(p => ({ ...p, answers: p.answers.filter((_, j) => j !== i) }))}
+                        disabled={newClue.answers.length === 1}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: 'var(--text3)', flexShrink: 0 }}>✕</button>
+                    </div>
+                  ))}
+                  <button type="button" className="btn-ghost" style={{ fontSize: 12 }}
+                    onClick={() => setNewClue(p => ({ ...p, answers: [...p.answers, ''] }))}>＋ Add answer</button>
                 </div>
               )}
               {newClue.clueType === 'gps' && (
@@ -792,6 +815,18 @@ export default function Admin() {
                   )}
                   <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>{t('admin.clues.playersSeeImage')}</p>
                 </div>
+              )}
+              {newClue.clueType === 'date' && (
+                <>
+                  <div className="form-group">
+                    <label>Target Date</label>
+                    <input type="date" required value={newClue.targetDate} onChange={e => setNewClue(p => ({...p, targetDate: e.target.value}))} />
+                  </div>
+                  <div className="form-group">
+                    <label>Tolerance (± days, 0 = exact)</label>
+                    <input type="number" min={0} max={365} value={newClue.dateTolerance} onChange={e => setNewClue(p => ({...p, dateTolerance: e.target.value}))} />
+                  </div>
+                </>
               )}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>{t('admin.clues.labelDifficulty')}</label>

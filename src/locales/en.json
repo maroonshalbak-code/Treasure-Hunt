@@ -91,7 +91,9 @@
     "diffMedium": "Medium",
     "diffHard": "Hard",
     "diffVeryHard": "Very Hard",
-    "diffExpert": "Expert"
+    "diffExpert": "Expert",
+    "date": "Date",
+    "wrongDate": "Wrong date, try again!"
   },
   "leaderboard": {
     "empty": "No one has found a clue yet. Be first!",
