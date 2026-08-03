@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import {
-  collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
-  query, orderBy, serverTimestamp, arrayUnion, arrayRemove, where
+  collection, addDoc, getDocs, doc, updateDoc, deleteDoc, setDoc,
+  query, orderBy, serverTimestamp, arrayUnion, arrayRemove, where, Timestamp
 } from 'firebase/firestore'
 import { db } from '../lib/firebase'
 import { useAuth } from '../lib/AuthContext'
@@ -75,6 +75,11 @@ export default function Admin() {
   const [qrToken, setQrToken] = useState(null)
   const [clueImageUrl, setClueImageUrl] = useState(null)
   const [uploadingClueImg, setUploadingClueImg] = useState(false)
+  const [showCreatePlayer, setShowCreatePlayer] = useState(false)
+  const [creatingPlayer, setCreatingPlayer] = useState(false)
+  const [generatingLink, setGeneratingLink] = useState(false)
+  const [showPlayerPassword, setShowPlayerPassword] = useState(false)
+  const [newPlayer, setNewPlayer] = useState({ username: '', email: '', password: '' })
   const clueImgRef = useRef()
 
   const [newHunt, setNewHunt] = useState({
@@ -304,6 +309,59 @@ export default function Admin() {
     setDeletingImageId(null)
   }
 
+  function openWhatsApp(message) {
+    window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank')
+  }
+
+  async function generateInviteLink() {
+    setGeneratingLink(true)
+    try {
+      const token = uuidv4()
+      const expires = new Date()
+      expires.setDate(expires.getDate() + 30)
+      await setDoc(doc(db, 'invites', token), {
+        type: 'open',
+        status: 'pending',
+        createdAt: serverTimestamp(),
+        expiresAt: Timestamp.fromDate(expires),
+      })
+      const link = `${window.location.origin}/join/${token}`
+      openWhatsApp(`🏴‍☠️ You're invited to join the treasure hunt!\n\nCreate your free account here:\n${link}\n\n(Link valid for 30 days)`)
+    } catch (err) {
+      setMsg({ type: 'error', text: 'Failed to generate invite link.' })
+    }
+    setGeneratingLink(false)
+  }
+
+  async function handleCreatePlayer(e) {
+    e.preventDefault()
+    if (!newPlayer.username || !newPlayer.email || !newPlayer.password) return
+    setCreatingPlayer(true)
+    try {
+      const token = uuidv4()
+      const expires = new Date()
+      expires.setDate(expires.getDate() + 7)
+      await setDoc(doc(db, 'invites', token), {
+        type: 'preregistered',
+        status: 'pending',
+        username: newPlayer.username,
+        email: newPlayer.email,
+        password: newPlayer.password,
+        createdAt: serverTimestamp(),
+        expiresAt: Timestamp.fromDate(expires),
+      })
+      const link = `${window.location.origin}/join/${token}`
+      const msg = `🏴‍☠️ Your treasure hunt account is ready!\n\n👤 Username: ${newPlayer.username}\n📧 Email: ${newPlayer.email}\n🔑 Password: ${newPlayer.password}\n\nTap here to activate your account:\n${link}\n\n(Link expires in 7 days)`
+      openWhatsApp(msg)
+      setNewPlayer({ username: '', email: '', password: '' })
+      setShowCreatePlayer(false)
+      setShowPlayerPassword(false)
+    } catch (err) {
+      setMsg({ type: 'error', text: 'Failed to create player invite.' })
+    }
+    setCreatingPlayer(false)
+  }
+
   if (loading || !profile) return <div className="page" style={{ display:'flex', justifyContent:'center', paddingTop:'4rem' }}><div className="spinner" /></div>
   if (!profile.isAdmin) return null
 
@@ -427,6 +485,90 @@ export default function Admin() {
               {isTeams && ` ${t('admin.participants.subtitleTeams')}`}
               {allowedUsers.length === 0 && <strong> {t('admin.participants.noOne')}</strong>}
             </p>
+
+            {/* Invite actions */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+              <button
+                className="btn-ghost"
+                style={{ fontSize: 13 }}
+                disabled={generatingLink}
+                onClick={generateInviteLink}
+              >
+                {generatingLink ? '⏳ Generating…' : '📲 Send invite link'}
+              </button>
+              <button
+                className="btn-ghost"
+                style={{ fontSize: 13 }}
+                onClick={() => { setShowCreatePlayer(s => !s); setMsg(null) }}
+              >
+                👤 {showCreatePlayer ? 'Cancel' : 'Create player'}
+              </button>
+            </div>
+
+            {/* Create player form */}
+            {showCreatePlayer && (
+              <div className="card" style={{ marginTop: 14, background: 'var(--surface2)' }}>
+                <h3 style={{ fontSize: 14, fontWeight: 800, marginBottom: 12, color: 'var(--primary)' }}>
+                  👤 Create a player account
+                </h3>
+                <p style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 12, lineHeight: 1.5 }}>
+                  Fill in the account details. We'll open WhatsApp with the credentials + a one-tap activation link to send to the player.
+                </p>
+                <form onSubmit={handleCreatePlayer}>
+                  <div className="form-group">
+                    <label style={{ fontSize: 12 }}>Username (display name)</label>
+                    <input
+                      placeholder="e.g. Sara"
+                      required
+                      value={newPlayer.username}
+                      onChange={e => setNewPlayer(p => ({ ...p, username: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 12 }}>Email</label>
+                    <input
+                      type="email"
+                      placeholder="sara@example.com"
+                      required
+                      value={newPlayer.email}
+                      onChange={e => setNewPlayer(p => ({ ...p, email: e.target.value }))}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label style={{ fontSize: 12 }}>Password</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPlayerPassword ? 'text' : 'password'}
+                        placeholder="At least 6 characters"
+                        required
+                        minLength={6}
+                        value={newPlayer.password}
+                        onChange={e => setNewPlayer(p => ({ ...p, password: e.target.value }))}
+                        style={{ paddingRight: '2.5rem' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPlayerPassword(s => !s)}
+                        style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', fontSize: 15 }}
+                      >{showPlayerPassword ? '🙈' : '👁️'}</button>
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="btn-primary"
+                      type="submit"
+                      disabled={creatingPlayer}
+                      style={{ flex: 1 }}
+                    >
+                      {creatingPlayer ? '⏳ Creating…' : '📲 Create & send via WhatsApp'}
+                    </button>
+                  </div>
+                </form>
+                <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 10, lineHeight: 1.5 }}>
+                  ⚠️ The activation link expires in 7 days. After the player activates, add them to a hunt from the list below.
+                </p>
+              </div>
+            )}
           </div>
           {isTeams && (
             <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>

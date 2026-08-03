@@ -38,5 +38,14 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.playerId == request.auth.uid;
       allow update, delete: if isAdmin();
     }
+
+    // Invites — publicly readable (anyone with the token URL can open it),
+    // only admins can create, anyone can mark as used (update status to 'used')
+    match /invites/{token} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if resource.data.status == 'pending';
+      allow delete: if isAdmin();
+    }
   }
 }

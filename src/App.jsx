@@ -6,6 +6,7 @@ import Home from './pages/Home'
 import Hunt from './pages/Hunt'
 import Admin from './pages/Admin'
 import Profile from './pages/Profile'
+import Join from './pages/Join'
 import Avatar from './components/Avatar'
 
 function Nav() {
@@ -52,6 +53,7 @@ function AppRoutes() {
       {user && <Nav />}
       <Routes>
         <Route path="/auth" element={user ? <Navigate to="/" replace /> : <Auth />} />
+        <Route path="/join/:token" element={user ? <Navigate to="/" replace /> : <Join />} />
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/hunt/:huntId" element={<ProtectedRoute><Hunt /></ProtectedRoute>} />
         <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
