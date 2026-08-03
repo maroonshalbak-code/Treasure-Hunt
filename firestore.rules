@@ -1,0 +1,42 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if the requesting user is an admin
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/profiles/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // Profiles — anyone authenticated can read; users can only write their own
+    match /profiles/{userId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if isAdmin();
+    }
+
+    // Hunts — users can read active hunts they're allowed into; admins see all
+    match /hunts/{huntId} {
+      allow read: if request.auth != null && (
+        isAdmin() ||
+        (resource.data.isActive == true && request.auth.uid in resource.data.allowedUsers)
+      );
+      allow write: if isAdmin();
+
+      // Clues subcollection
+      match /clues/{clueId} {
+        allow read: if request.auth != null;
+        allow write: if isAdmin();
+      }
+    }
+
+    // Player progress — authenticated users can read all (for leaderboard),
+    // but can only create their own entries
+    match /playerProgress/{progressId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.playerId == request.auth.uid;
+      allow update, delete: if isAdmin();
+    }
+  }
+}

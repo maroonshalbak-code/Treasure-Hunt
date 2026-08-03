@@ -1,0 +1,183 @@
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { collection, query, where, onSnapshot, getDocs } from 'firebase/firestore'
+import { db } from '../lib/firebase'
+import Avatar from './Avatar'
+
+const MEDALS = ['🥇', '🥈', '🥉']
+const TEAM_COLORS = ['#3498db', '#e74c3c']
+
+export default function Leaderboard({ huntId, totalClues, hunt }) {
+  const { t } = useTranslation()
+  const [rows, setRows] = useState([])
+  const [profiles, setProfiles] = useState({})
+  const [loading, setLoading] = useState(true)
+
+  const isTeams = hunt?.mode === 'teams'
+  const teamNames = hunt?.teamNames || ['Team A', 'Team B']
+  const teamAssignments = hunt?.teamAssignments || {}
+
+  useEffect(() => {
+    const q = query(collection(db, 'playerProgress'), where('huntId', '==', huntId))
+    const unsub = onSnapshot(q, async (snap) => {
+      const byPlayer = {}
+      snap.docs.forEach(d => {
+        const { playerId, username, points, completedAt, status } = d.data()
+        // Only count approved or legacy (no status) entries toward score
+        if (status === 'pending' || status === 'rejected') return
+        if (!byPlayer[playerId]) {
+          byPlayer[playerId] = { playerId, username, cluesFound: 0, totalPoints: 0, lastFoundAt: null }
+        }
+        byPlayer[playerId].cluesFound += 1
+        byPlayer[playerId].totalPoints += points || 0
+        const ts = completedAt?.toDate?.() ?? null
+        if (ts && (!byPlayer[playerId].lastFoundAt || ts > byPlayer[playerId].lastFoundAt)) {
+          byPlayer[playerId].lastFoundAt = ts
+        }
+      })
+
+      const sorted = Object.values(byPlayer).sort((a, b) => {
+        if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints
+        return (a.lastFoundAt || 0) - (b.lastFoundAt || 0)
+      })
+      setRows(sorted)
+
+      const uids = Object.keys(byPlayer)
+      if (uids.length > 0) {
+        const profileSnap = await getDocs(query(
+          collection(db, 'profiles'),
+          where('__name__', 'in', uids.slice(0, 30))
+        ))
+        const map = {}
+        profileSnap.docs.forEach(d => { map[d.id] = d.data() })
+        setProfiles(map)
+      }
+
+      setLoading(false)
+    })
+    return unsub
+  }, [huntId])
+
+  if (loading) return <div style={{ display:'flex', justifyContent:'center', padding:'1rem' }}><div className="spinner" /></div>
+  if (rows.length === 0) return (
+    <div style={{ textAlign:'center', color:'var(--text3)', padding:'2rem', fontSize:14 }}>
+      {t('leaderboard.empty')}
+    </div>
+  )
+
+  if (isTeams) {
+    // Aggregate by team
+    const teamTotals = [
+      { name: teamNames[0], color: TEAM_COLORS[0], members: rows.filter(r => teamAssignments[r.playerId] === 0) },
+      { name: teamNames[1], color: TEAM_COLORS[1], members: rows.filter(r => teamAssignments[r.playerId] === 1) },
+    ]
+    teamTotals.forEach(t => {
+      t.totalPoints = t.members.reduce((sum, m) => sum + m.totalPoints, 0)
+      t.cluesFound = t.members.reduce((sum, m) => sum + m.cluesFound, 0)
+    })
+    const sorted = [...teamTotals].sort((a, b) => b.totalPoints - a.totalPoints)
+
+    return (
+      <div>
+        {/* Team banners */}
+        <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)' }}>
+          {sorted.map((team, i) => (
+            <div key={team.name} style={{
+              flex: 1, padding: '0.875rem 1rem', textAlign: 'center',
+              background: i === 0 ? team.color + '15' : 'transparent',
+              borderRight: i === 0 ? '1px solid var(--border)' : 'none',
+            }}>
+              <div style={{ fontSize: 18, marginBottom: 2 }}>{i === 0 ? '🏆' : '🥈'}</div>
+              <div style={{ fontWeight: 700, fontSize: 15, color: team.color }}>{team.name}</div>
+              <div style={{ fontWeight: 700, fontSize: 20, color: team.color }}>{team.totalPoints} pts</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)' }}>{team.cluesFound} clues found</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Individual rows within each team */}
+        {sorted.map(team => (
+          <div key={team.name}>
+            <div style={{ padding: '0.6rem 1.25rem', background: team.color + '10', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: 6 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: team.color }} />
+              <span style={{ fontSize: 13, fontWeight: 600, color: team.color }}>{team.name}</span>
+            </div>
+            {team.members.length === 0 ? (
+              <div style={{ padding: '0.75rem 1.25rem', fontSize: 13, color: 'var(--text3)' }}>No members yet</div>
+            ) : (
+              team.members.map((row, i) => {
+                const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
+                const profile = profiles[row.playerId]
+                return (
+                  <div key={row.playerId} className="leaderboard-row">
+                    <div className="rank" style={{ color: team.color }}>#{i + 1}</div>
+                    <Avatar username={row.username} photoUrl={profile?.photoUrl} size={32} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                        <span style={{ fontWeight: 500, fontSize: 13 }}>{row.username}</span>
+                        <span style={{ fontSize: 12, color:'var(--text2)', flexShrink: 0 }}>
+                          {row.cluesFound}/{totalClues} · <span style={{ color: team.color, fontWeight:600 }}>{row.totalPoints} pts</span>
+                        </span>
+                      </div>
+                      <div className="progress-bar-wrap" style={{ marginTop: 4 }}>
+                        <div className="progress-bar-fill" style={{ width: `${pct}%`, background: team.color }} />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })
+            )}
+          </div>
+        ))}
+
+        {/* Unassigned players */}
+        {rows.filter(r => teamAssignments[r.playerId] === undefined).map((row, i) => {
+          const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
+          const profile = profiles[row.playerId]
+          return (
+            <div key={row.playerId} className="leaderboard-row" style={{ opacity: 0.6 }}>
+              <div className="rank">#{i + 1}</div>
+              <Avatar username={row.username} photoUrl={profile?.photoUrl} size={32} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                  <span style={{ fontWeight: 500, fontSize: 13 }}>{row.username}</span>
+                  <span style={{ fontSize: 12, color:'var(--text2)' }}>{row.totalPoints} pts</span>
+                </div>
+                <div className="progress-bar-wrap" style={{ marginTop: 4 }}>
+                  <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+                </div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
+  // Individual mode leaderboard
+  return (
+    <div>
+      {rows.map((row, i) => {
+        const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
+        const profile = profiles[row.playerId]
+        return (
+          <div key={row.playerId} className="leaderboard-row">
+            <div className={`rank ${i < 3 ? 'top' : ''}`}>{i < 3 ? MEDALS[i] : `#${i + 1}`}</div>
+            <Avatar username={row.username} photoUrl={profile?.photoUrl} size={36} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
+                <span style={{ fontWeight: 500, fontSize: 14 }}>{row.username}</span>
+                <span style={{ fontSize: 13, color:'var(--text2)', flexShrink: 0 }}>
+                  {row.cluesFound}/{totalClues} · <span style={{ color:'var(--accent)', fontWeight:600 }}>{row.totalPoints} pts</span>
+                </span>
+              </div>
+              <div className="progress-bar-wrap" style={{ marginTop: 4 }}>
+                <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
+              </div>
+            </div>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
