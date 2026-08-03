@@ -221,7 +221,8 @@
       "qrPrintLabel": "QR code — print and place at location",
       "downloadQr": "Download QR",
       "adding": "Adding…",
-      "add": "Add clue"
+      "add": "Add clue",
+      "added": "Clue added!"
     },
     "deleteConfirm": "Delete failed: {{error}}"
   }

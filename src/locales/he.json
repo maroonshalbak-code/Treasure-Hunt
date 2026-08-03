@@ -221,7 +221,8 @@
       "qrPrintLabel": "קוד QR — הדפס והנח במיקום",
       "downloadQr": "הורד QR",
       "adding": "מוסיף…",
-      "add": "הוסף רמז"
+      "add": "הוסף רמז",
+      "added": "רמז נוסף!"
     },
     "deleteConfirm": "המחיקה נכשלה: {{error}}"
   }

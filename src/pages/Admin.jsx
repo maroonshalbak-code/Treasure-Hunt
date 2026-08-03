@@ -226,34 +226,40 @@ export default function Admin() {
 
   async function createClue(e) {
     e.preventDefault(); setSaving(true); setMsg(null)
-    const token = uuidv4()
-    const payload = {
-      title: newClue.title, riddle: newClue.riddle,
-      clueType: newClue.clueType,
-      difficulty: Number(newClue.difficulty),
-      points: DIFFICULTY_POINTS[newClue.difficulty],
-      displayOrder: clues.length,
+    try {
+      const token = crypto.randomUUID()
+      const payload = {
+        title: newClue.title, riddle: newClue.riddle,
+        clueType: newClue.clueType,
+        difficulty: Number(newClue.difficulty),
+        points: DIFFICULTY_POINTS[newClue.difficulty],
+        displayOrder: clues.length,
+      }
+      if (newClue.clueType === 'text') payload.answer = newClue.answer.toLowerCase().trim()
+      if (newClue.clueType === 'gps') {
+        payload.lat = parseFloat(newClue.lat); payload.lng = parseFloat(newClue.lng)
+        payload.gpsRadiusMeters = Number(newClue.gpsRadiusMeters)
+      }
+      if (newClue.clueType === 'qr') payload.qrToken = token
+      if (newClue.clueType === 'image') payload.imageUrl = clueImageUrl
+
+      await addDoc(collection(db, 'hunts', selectedHunt.id, 'clues'), payload)
+      setMsg({ type: 'success', text: t('admin.clues.added') })
+      setNewClue({ title: '', riddle: '', clueType: 'text', answer: '', lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1 })
+      setClueImageUrl(null)
+
+      if (newClue.clueType === 'qr') {
+        const url = await QRCode.toDataURL(token, { width: 300, margin: 2 })
+        setQrDataUrl(url); setQrToken(token)
+      } else { setQrDataUrl(null); setQrToken(null) }
+
+      fetchClues(selectedHunt.id)
+    } catch (err) {
+      console.error('createClue error:', err)
+      setMsg({ type: 'error', text: err.message || 'Failed to add clue.' })
+    } finally {
+      setSaving(false)
     }
-    if (newClue.clueType === 'text') payload.answer = newClue.answer.toLowerCase().trim()
-    if (newClue.clueType === 'gps') {
-      payload.lat = parseFloat(newClue.lat); payload.lng = parseFloat(newClue.lng)
-      payload.gpsRadiusMeters = Number(newClue.gpsRadiusMeters)
-    }
-    if (newClue.clueType === 'qr') payload.qrToken = token
-    if (newClue.clueType === 'image') payload.imageUrl = clueImageUrl
-
-    await addDoc(collection(db, 'hunts', selectedHunt.id, 'clues'), payload)
-    setMsg({ type: 'success', text: 'Clue added!' })
-    setNewClue({ title: '', riddle: '', clueType: 'text', answer: '', lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1 })
-    setClueImageUrl(null)
-
-    if (newClue.clueType === 'qr') {
-      const url = await QRCode.toDataURL(token, { width: 300, margin: 2 })
-      setQrDataUrl(url); setQrToken(token)
-    } else { setQrDataUrl(null); setQrToken(null) }
-
-    fetchClues(selectedHunt.id)
-    setSaving(false)
   }
 
   async function showClueQr(clue) {
@@ -680,7 +686,7 @@ export default function Admin() {
 
       {/* Clues */}
       {tab === 'clues' && selectedHunt && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>{t('admin.clues.heading', { count: clues.length })}</h2>
             {clues.length === 0 && <p style={{ color: 'var(--text3)', fontSize: 14 }}>{t('admin.clues.noClues')}</p>}
