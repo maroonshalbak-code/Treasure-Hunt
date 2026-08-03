@@ -138,7 +138,7 @@ export default function Hunt() {
           </button>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
             <h1 style={{ fontSize: 20, fontWeight: 900, color: 'var(--primary)' }}>{hunt.title}</h1>
-            {isTeams && <span className="badge badge-gold">👥 Teams</span>}
+            {isTeams && <span className="badge badge-gold">👥 {t('hunt.teamsLabel')}</span>}
           </div>
           {hunt.description && <p style={{ color: 'var(--text2)', fontSize: 14 }}>{hunt.description}</p>}
           <div style={{ marginTop: 14, background: 'var(--surface2)', borderRadius: 'var(--radius)', padding: '0.75rem 1rem', border: '2px solid var(--border)' }}>
@@ -151,7 +151,7 @@ export default function Hunt() {
             </div>
             {pendingIds.size > 0 && (
               <p style={{ marginTop: 8, fontSize: 12, color: 'var(--warning)', fontWeight: 700 }}>
-                ⏳ {pendingIds.size} {pendingIds.size === 1 ? 'photo' : 'photos'} awaiting admin review
+                {t('hunt.pendingPhotos', { count: pendingIds.size })}
               </p>
             )}
             {found === total && total > 0 && (
@@ -177,12 +177,12 @@ export default function Hunt() {
             <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* Status filters */}
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>STATUS</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>{t('hunt.filterStatus')}</span>
                 {[
-                  { key: 'all', label: 'All' },
-                  { key: 'open', label: '○ Open' },
-                  { key: 'pending', label: '⏳ Pending' },
-                  { key: 'completed', label: '✅ Done' },
+                  { key: 'all', label: t('hunt.filterAll') },
+                  { key: 'open', label: `○ ${t('hunt.filterOpen')}` },
+                  { key: 'pending', label: `⏳ ${t('hunt.filterPending')}` },
+                  { key: 'completed', label: `✅ ${t('hunt.filterDone')}` },
                 ].map(({ key, label }) => (
                   <button
                     key={key}
@@ -201,13 +201,13 @@ export default function Hunt() {
 
               {/* Type filters */}
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>TYPE</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>{t('hunt.filterType')}</span>
                 {[
-                  { key: 'all', label: 'All' },
-                  { key: 'text', label: '💬 Riddle' },
-                  { key: 'gps', label: '📍 GPS' },
-                  { key: 'qr', label: '📷 QR' },
-                  { key: 'image', label: '🖼️ Image' },
+                  { key: 'all', label: t('hunt.filterAll') },
+                  { key: 'text', label: `💬 ${t('clue.riddle')}` },
+                  { key: 'gps', label: `📍 ${t('clue.gps')}` },
+                  { key: 'qr', label: `📷 ${t('clue.qr')}` },
+                  { key: 'image', label: `🖼️ ${t('clue.image').replace('📸 ', '')}` },
                 ].map(({ key, label }) => (
                   <button
                     key={key}
@@ -226,7 +226,7 @@ export default function Hunt() {
 
               {/* Complexity filters */}
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>LEVEL</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 2 }}>{t('hunt.filterLevel')}</span>
                 <button
                   onClick={() => setComplexityFilter(0)}
                   style={{
@@ -237,7 +237,7 @@ export default function Hunt() {
                     border: complexityFilter === 0 ? '2px solid var(--primary)' : '2px solid var(--border)',
                     transition: 'all 0.15s',
                   }}
-                >All</button>
+                >{t('hunt.filterAll')}</button>
                 {[1, 2, 3, 4, 5].map(n => (
                   <button
                     key={n}
@@ -276,7 +276,7 @@ export default function Hunt() {
               })
               if (filtered.length === 0) return (
                 <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '2rem', fontSize: 14 }}>
-                  No clues match these filters
+                  {t('hunt.noFilterResults')}
                 </div>
               )
               return (
@@ -340,7 +340,7 @@ export default function Hunt() {
             })}
             {participantsByTeam.unassigned.length > 0 && (
               <div>
-                <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6, fontWeight: 600 }}>Unassigned</div>
+                <div style={{ fontSize: 12, color: 'var(--text3)', marginBottom: 6, fontWeight: 600 }}>{t('hunt.unassigned')}</div>
                 {participantsByTeam.unassigned.map(p => (
                   <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                     <Avatar username={p.username} photoUrl={p.photoUrl} size={28} />
@@ -392,7 +392,7 @@ export default function Hunt() {
             </span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ fontWeight: 800, fontSize: 14 }}>
-                {notif.type === 'approved' ? 'Clue approved! +points added' : 'Clue rejected'}
+                {notif.type === 'approved' ? t('hunt.clueApproved') : t('hunt.clueRejected')}
               </div>
               <div style={{ fontSize: 12, fontWeight: 600, opacity: 0.75, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {notif.clueTitle}

@@ -32,7 +32,21 @@
     "admin": "מנהל",
     "you": "(את/ה)",
     "liveLeaderboard": "לוח תוצאות חי",
-    "liveSubtitle": "מתעדכן בזמן אמת עם מציאת רמזים"
+    "liveSubtitle": "מתעדכן בזמן אמת עם מציאת רמזים",
+    "teamsLabel": "קבוצות",
+    "unassigned": "לא משויך",
+    "filterAll": "הכל",
+    "filterStatus": "סטטוס",
+    "filterType": "סוג",
+    "filterLevel": "רמה",
+    "filterOpen": "פתוח",
+    "filterPending": "ממתין",
+    "filterDone": "הושלם",
+    "noFilterResults": "אין רמזים התואמים לסינון זה",
+    "clueApproved": "הרמז אושר! נקודות נוספו",
+    "clueRejected": "הרמז נדחה",
+    "pendingPhotos_one": "⏳ {{count}} תמונה ממתינה לאישור",
+    "pendingPhotos_other": "⏳ {{count}} תמונות ממתינות לאישור"
   },
   "clue": {
     "riddle": "חידה",
@@ -69,10 +83,21 @@
     "imageInstruction": "מצא את המיקום המופיע בתמונה, ואז צלם תמונה כהוכחה.",
     "takePhoto": "📸 צלם / העלה תמונה",
     "uploading": "מעלה תמונה…",
-    "uploadFailed": "ההעלאה נכשלה: {{error}}"
+    "uploadFailed": "ההעלאה נכשלה: {{error}}",
+    "statusOpen": "פתוח",
+    "statusDone": "הושלם",
+    "statusReview": "ממתין",
+    "diffEasy": "קל",
+    "diffMedium": "בינוני",
+    "diffHard": "קשה",
+    "diffVeryHard": "קשה מאוד",
+    "diffExpert": "מומחה"
   },
   "leaderboard": {
-    "empty": "אף אחד עדיין לא מצא רמז. היה הראשון!"
+    "empty": "אף אחד עדיין לא מצא רמז. היה הראשון!",
+    "noMembers": "אין חברים עדיין",
+    "cluesFound": "רמזים נמצאו",
+    "pts": "נק'"
   },
   "profile": {
     "title": "הפרופיל שלך",
@@ -105,5 +130,99 @@
     "en": "English",
     "ar": "العربية",
     "he": "עברית"
+  },
+  "admin": {
+    "title": "לוח ניהול",
+    "tabs": {
+      "hunts": "ציידים",
+      "clues": "רמזים",
+      "participants": "משתתפים",
+      "reviews": "ביקורות",
+      "images": "🖼️ תמונות",
+      "newHunt": "+ ציד חדש"
+    },
+    "hunts": {
+      "noHunts": "אין ציידים עדיין. צור אחד.",
+      "active": "פעיל",
+      "inactive": "לא פעיל",
+      "teams": "קבוצות",
+      "clueCount": "{{count}} רמזים",
+      "playerCount": "{{count}} שחקנים",
+      "btnParticipants": "👥 משתתפים",
+      "btnClues": "🗝️ רמזים",
+      "btnReviews": "📸 ביקורות",
+      "btnImages": "🖼️ תמונות",
+      "btnDeactivate": "⏸ השבת",
+      "btnActivate": "▶ הפעל",
+      "btnDelete": "🗑️ מחק"
+    },
+    "newHunt": {
+      "heading": "יצירת ציד חדש",
+      "labelTitle": "כותרת",
+      "placeholderTitle": "ציד אוצר במרכז העיר",
+      "labelDesc": "תיאור (אופציונלי)",
+      "labelMode": "מצב ציד",
+      "modeIndividual": "👤 יחיד",
+      "modeTeams": "👥 קבוצות",
+      "labelTeam1": "שם קבוצה 1",
+      "labelTeam2": "שם קבוצה 2",
+      "labelStartsAt": "תאריך התחלה (אופציונלי)",
+      "labelEndsAt": "תאריך סיום (אופציונלי)",
+      "creating": "יוצר…",
+      "create": "צור ציד"
+    },
+    "participants": {
+      "heading": "משתתפים",
+      "subtitle": "רק משתמשים מסומנים יכולים לראות ולשחק בציד זה.",
+      "subtitleTeams": "שייך כל שחקן לקבוצה.",
+      "noOne": "אף אחד עדיין לא יכול להצטרף.",
+      "noUsers": "אין משתמשים רשומים עדיין.",
+      "allowed": "✓ מורשה",
+      "noAccess": "אין גישה"
+    },
+    "reviews": {
+      "heading": "ביקורת תמונות",
+      "noPending": "אין תמונות ממתינות לביקורת.",
+      "clueLabel": "רמז: {{title}} · +{{points}} נק'",
+      "approve": "✓ אשר",
+      "reject": "✕ דחה"
+    },
+    "images": {
+      "heading": "תמונות Cloudinary",
+      "subtitle": "כולל תמונות רמז וצילומי הוכחה של שחקנים. מחיקה מסירה את הקובץ מ-Cloudinary.",
+      "missingEnv": "הוסף VITE_CLOUDINARY_API_KEY ו-VITE_CLOUDINARY_API_SECRET לקובץ .env להפעלת המחיקה.",
+      "noImages": "לא נמצאו תמונות לציד זה.",
+      "hintLabel": "🖼️ רמז תמונה",
+      "proofLabel": "📸 הוכחת שחקן",
+      "deleting": "⏳ מוחק…",
+      "delete": "🗑️ מחק"
+    },
+    "clues": {
+      "heading": "רמזים ({{count}})",
+      "noClues": "אין רמזים עדיין. הוסף כמה ←",
+      "addHeading": "הוסף רמז",
+      "labelTitle": "כותרת",
+      "placeholderTitle": "מגדל השעון הישן",
+      "labelRiddle": "טקסט חידה / רמז",
+      "labelType": "סוג רמז",
+      "labelAnswer": "תשובה נכונה",
+      "placeholderAnswer": "מגדל השעון",
+      "labelLat": "קו רוחב",
+      "labelLng": "קו אורך",
+      "labelRadius": "רדיוס (מטרים)",
+      "labelHintImage": "תמונת רמז",
+      "qrHint": "📷 יווצר קוד QR ייחודי. הדפס והנח אותו במיקום.",
+      "changeImage": "החלף תמונה",
+      "uploadImage": "🖼️ העלה תמונת רמז",
+      "uploadingImage": "מעלה…",
+      "playersSeeImage": "השחקנים יראו תמונה זו. עליהם לשלוח תמונת הוכחה שתבדוק.",
+      "labelDifficulty": "רמת קושי",
+      "pointsLabel": "= {{points}} נקודות",
+      "qrPrintLabel": "קוד QR — הדפס והנח במיקום",
+      "downloadQr": "הורד QR",
+      "adding": "מוסיף…",
+      "add": "הוסף רמז"
+    },
+    "deleteConfirm": "המחיקה נכשלה: {{error}}"
   }
 }

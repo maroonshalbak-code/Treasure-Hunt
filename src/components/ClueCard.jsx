@@ -10,7 +10,7 @@ const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 const TYPE_BADGE = { text: 'badge-text', gps: 'badge-gps', qr: 'badge-qr', image: 'badge-image' }
 const TYPE_EMOJI = { text: '💬', gps: '📍', qr: '📷', image: '🖼️' }
 const DIFF_CLASS = { 1: 'diff-1', 2: 'diff-2', 3: 'diff-3', 4: 'diff-4', 5: 'diff-5' }
-const DIFF_LABEL = { 1: 'Easy', 2: 'Medium', 3: 'Hard', 4: 'Very Hard', 5: 'Expert' }
+const DIFF_KEY = { 1: 'clue.diffEasy', 2: 'clue.diffMedium', 3: 'clue.diffHard', 4: 'clue.diffVeryHard', 5: 'clue.diffExpert' }
 const DIFF_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#ef4444', '#8b5cf6']
 
 export default function ClueCard({ clue, completed, pending, onComplete }) {
@@ -176,9 +176,9 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
           <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`} style={{ fontSize: 10, padding: '2px 7px' }}>
             {TYPE_EMOJI[clue.clueType]} {typeLabels[clue.clueType]}
           </span>
-          {completed && <span style={{ fontSize: 17 }} title="Completed">✅</span>}
-          {pending && !completed && <span style={{ fontSize: 17 }} title="Pending review">⏳</span>}
-          {!completed && !pending && <span style={{ fontSize: 15, color: 'var(--text3)' }} title="Open">○</span>}
+          {completed && <span style={{ fontSize: 17 }} title={t('clue.statusDone')}>✅</span>}
+          {pending && !completed && <span style={{ fontSize: 17 }} title={t('clue.statusReview')}>⏳</span>}
+          {!completed && !pending && <span style={{ fontSize: 15, color: 'var(--text3)' }} title={t('clue.statusOpen')}>○</span>}
         </div>
 
         {/* Title */}
@@ -215,7 +215,7 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
           <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`}>
             {TYPE_EMOJI[clue.clueType]} {typeLabels[clue.clueType]}
           </span>
-          <span className={`badge ${DIFF_CLASS[diff]}`}>{'⭐'.repeat(diff)} {DIFF_LABEL[diff]}</span>
+          <span className={`badge ${DIFF_CLASS[diff]}`}>{'⭐'.repeat(diff)} {t(DIFF_KEY[diff])}</span>
           <span className="badge badge-gold">{t('clue.points', { points: clue.points })}</span>
           {completed && <span className="badge badge-success">✓ {t('clue.found')}</span>}
           {pending && !completed && <span className="badge badge-pending">{t('clue.pendingReview')}</span>}

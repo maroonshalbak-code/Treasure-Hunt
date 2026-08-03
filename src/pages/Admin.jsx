@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   collection, addDoc, getDocs, doc, updateDoc, deleteDoc,
   query, orderBy, serverTimestamp, arrayUnion, arrayRemove, where
@@ -54,6 +55,7 @@ const DIFFICULTY_POINTS = { 1: 10, 2: 20, 3: 30, 4: 40, 5: 50 }
 
 export default function Admin() {
   const { profile, user } = useAuth()
+  const { t } = useTranslation()
   const navigate = useNavigate()
 
   useEffect(() => { if (profile && !profile.isAdmin) navigate('/') }, [profile])
@@ -297,7 +299,7 @@ export default function Admin() {
       setHuntImages(prev => prev.filter(i => !(i.docId === img.docId && i.kind === img.kind)))
       setMsg({ type: 'success', text: 'Image deleted from Cloudinary.' })
     } catch (err) {
-      setMsg({ type: 'error', text: 'Delete failed: ' + err.message })
+      setMsg({ type: 'error', text: t('admin.deleteConfirm', { error: err.message }) })
     }
     setDeletingImageId(null)
   }
@@ -312,27 +314,27 @@ export default function Admin() {
 
   return (
     <div className="page-wide">
-      <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: '1.5rem' }}>Admin panel</h1>
+      <h1 style={{ fontSize: 20, fontWeight: 600, marginBottom: '1.5rem' }}>{t('admin.title')}</h1>
 
       <div className="tab-bar">
-        <button className={`tab ${tab === 'hunts' ? 'active' : ''}`} onClick={() => setTab('hunts')}>Hunts</button>
+        <button className={`tab ${tab === 'hunts' ? 'active' : ''}`} onClick={() => setTab('hunts')}>{t('admin.tabs.hunts')}</button>
         {selectedHunt && (
           <>
             <button className={`tab ${tab === 'clues' ? 'active' : ''}`} onClick={() => setTab('clues')}>
-              Clues — {selectedHunt.title}
+              {t('admin.tabs.clues')} — {selectedHunt.title}
             </button>
             <button className={`tab ${tab === 'participants' ? 'active' : ''}`} onClick={() => { setTab('participants'); fetchAllUsers() }}>
-              Participants ({allowedUsers.length})
+              {t('admin.tabs.participants')} ({allowedUsers.length})
             </button>
             <button className={`tab ${tab === 'reviews' ? 'active' : ''}`} onClick={() => { setTab('reviews'); fetchReviews(selectedHunt.id) }}>
-              Reviews {reviews.length > 0 ? `(${reviews.length})` : ''}
+              {t('admin.tabs.reviews')} {reviews.length > 0 ? `(${reviews.length})` : ''}
             </button>
             <button className={`tab ${tab === 'images' ? 'active' : ''}`} onClick={() => { setTab('images'); fetchHuntImages(selectedHunt.id) }}>
-              🖼️ Images
+              {t('admin.tabs.images')}
             </button>
           </>
         )}
-        <button className={`tab ${tab === 'new-hunt' ? 'active' : ''}`} onClick={() => setTab('new-hunt')}>+ New hunt</button>
+        <button className={`tab ${tab === 'new-hunt' ? 'active' : ''}`} onClick={() => setTab('new-hunt')}>{t('admin.tabs.newHunt')}</button>
       </div>
 
       {msg && <div className={`alert alert-${msg.type}`}>{msg.text}</div>}
@@ -340,26 +342,26 @@ export default function Admin() {
       {/* Hunts list */}
       {tab === 'hunts' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {hunts.length === 0 && <p style={{ color: 'var(--text3)' }}>No hunts yet. Create one.</p>}
+          {hunts.length === 0 && <p style={{ color: 'var(--text3)' }}>{t('admin.hunts.noHunts')}</p>}
           {hunts.map(hunt => (
             <div key={hunt.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                 <span style={{ fontWeight: 700, fontSize: 15 }}>{hunt.title}</span>
                 <span className={`badge ${hunt.isActive ? 'badge-success' : 'badge-gray'}`}>
-                  {hunt.isActive ? 'Active' : 'Inactive'}
+                  {hunt.isActive ? t('admin.hunts.active') : t('admin.hunts.inactive')}
                 </span>
-                {hunt.mode === 'teams' && <span className="badge badge-gold">Teams</span>}
+                {hunt.mode === 'teams' && <span className="badge badge-gold">{t('admin.hunts.teams')}</span>}
                 <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 'auto' }}>
-                  {hunt.clueCount} clues · {(hunt.allowedUsers || []).length} players
+                  {t('admin.hunts.clueCount', { count: hunt.clueCount })} · {t('admin.hunts.playerCount', { count: (hunt.allowedUsers || []).length })}
                 </span>
               </div>
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('participants') }}>👥 Participants</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('clues') }}>🗝️ Clues</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('reviews'); fetchReviews(hunt.id) }}>📸 Reviews</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('images'); fetchHuntImages(hunt.id) }}>🖼️ Images</button>
-                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => toggleHunt(hunt)}>{hunt.isActive ? '⏸ Deactivate' : '▶ Activate'}</button>
-                <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => deleteHunt(hunt.id)}>🗑️ Delete</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('participants') }}>{t('admin.hunts.btnParticipants')}</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('clues') }}>{t('admin.hunts.btnClues')}</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('reviews'); fetchReviews(hunt.id) }}>{t('admin.hunts.btnReviews')}</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('images'); fetchHuntImages(hunt.id) }}>{t('admin.hunts.btnImages')}</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => toggleHunt(hunt)}>{hunt.isActive ? t('admin.hunts.btnDeactivate') : t('admin.hunts.btnActivate')}</button>
+                <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => deleteHunt(hunt.id)}>{t('admin.hunts.btnDelete')}</button>
               </div>
             </div>
           ))}
@@ -369,48 +371,48 @@ export default function Admin() {
       {/* New hunt form */}
       {tab === 'new-hunt' && (
         <div className="card" style={{ maxWidth: 520 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1.25rem' }}>Create a new hunt</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1.25rem' }}>{t('admin.newHunt.heading')}</h2>
           <form onSubmit={createHunt}>
             <div className="form-group">
-              <label>Title</label>
-              <input placeholder="City centre treasure hunt" required value={newHunt.title} onChange={e => setNewHunt(p => ({...p, title: e.target.value}))} />
+              <label>{t('admin.newHunt.labelTitle')}</label>
+              <input placeholder={t('admin.newHunt.placeholderTitle')} required value={newHunt.title} onChange={e => setNewHunt(p => ({...p, title: e.target.value}))} />
             </div>
             <div className="form-group">
-              <label>Description (optional)</label>
+              <label>{t('admin.newHunt.labelDesc')}</label>
               <textarea rows={2} value={newHunt.description} onChange={e => setNewHunt(p => ({...p, description: e.target.value}))} style={{ resize: 'vertical' }} />
             </div>
             <div className="form-group">
-              <label>Hunt mode</label>
+              <label>{t('admin.newHunt.labelMode')}</label>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button type="button" className={newHunt.mode === 'individual' ? 'btn-primary' : 'btn-ghost'} style={{ flex: 1 }}
-                  onClick={() => setNewHunt(p => ({...p, mode: 'individual'}))}>👤 Individual</button>
+                  onClick={() => setNewHunt(p => ({...p, mode: 'individual'}))}>{t('admin.newHunt.modeIndividual')}</button>
                 <button type="button" className={newHunt.mode === 'teams' ? 'btn-primary' : 'btn-ghost'} style={{ flex: 1 }}
-                  onClick={() => setNewHunt(p => ({...p, mode: 'teams'}))}>👥 Teams</button>
+                  onClick={() => setNewHunt(p => ({...p, mode: 'teams'}))}>{t('admin.newHunt.modeTeams')}</button>
               </div>
             </div>
             {newHunt.mode === 'teams' && (
               <div className="form-row" style={{ marginBottom: '1rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Team 1 name</label>
+                  <label>{t('admin.newHunt.labelTeam1')}</label>
                   <input value={newHunt.teamAName} onChange={e => setNewHunt(p => ({...p, teamAName: e.target.value}))} />
                 </div>
                 <div className="form-group" style={{ marginBottom: 0 }}>
-                  <label>Team 2 name</label>
+                  <label>{t('admin.newHunt.labelTeam2')}</label>
                   <input value={newHunt.teamBName} onChange={e => setNewHunt(p => ({...p, teamBName: e.target.value}))} />
                 </div>
               </div>
             )}
             <div className="form-row" style={{ marginBottom: '1rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Starts at (optional)</label>
+                <label>{t('admin.newHunt.labelStartsAt')}</label>
                 <input type="datetime-local" value={newHunt.startsAt} onChange={e => setNewHunt(p => ({...p, startsAt: e.target.value}))} />
               </div>
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label>Ends at (optional)</label>
+                <label>{t('admin.newHunt.labelEndsAt')}</label>
                 <input type="datetime-local" value={newHunt.endsAt} onChange={e => setNewHunt(p => ({...p, endsAt: e.target.value}))} />
               </div>
             </div>
-            <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Creating…' : 'Create hunt'}</button>
+            <button className="btn-primary" type="submit" disabled={saving}>{saving ? t('admin.newHunt.creating') : t('admin.newHunt.create')}</button>
           </form>
         </div>
       )}
@@ -419,11 +421,11 @@ export default function Admin() {
       {tab === 'participants' && selectedHunt && (
         <div style={{ maxWidth: 560 }}>
           <div style={{ marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 600 }}>{selectedHunt.title} — Participants</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 600 }}>{selectedHunt.title} — {t('admin.participants.heading')}</h2>
             <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>
-              Only checked users can see and play this hunt.
-              {isTeams && ' Assign each player to a team.'}
-              {allowedUsers.length === 0 && <strong> No one can join yet.</strong>}
+              {t('admin.participants.subtitle')}
+              {isTeams && ` ${t('admin.participants.subtitleTeams')}`}
+              {allowedUsers.length === 0 && <strong> {t('admin.participants.noOne')}</strong>}
             </p>
           </div>
           {isTeams && (
@@ -440,7 +442,7 @@ export default function Admin() {
             </div>
           )}
           {allUsers.length === 0 ? (
-            <p style={{ color: 'var(--text3)', fontSize: 14 }}>No registered users yet.</p>
+            <p style={{ color: 'var(--text3)', fontSize: 14 }}>{t('admin.participants.noUsers')}</p>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {allUsers.map(u => {
@@ -471,7 +473,7 @@ export default function Admin() {
                     )}
                     {!isTeams && (
                       <span style={{ fontSize: 12, color: isAllowed ? 'var(--success)' : 'var(--text3)' }}>
-                        {isAllowed ? '✓ Allowed' : 'No access'}
+                        {isAllowed ? t('admin.participants.allowed') : t('admin.participants.noAccess')}
                       </span>
                     )}
                   </div>
@@ -485,10 +487,10 @@ export default function Admin() {
       {/* Photo Reviews */}
       {tab === 'reviews' && selectedHunt && (
         <div style={{ maxWidth: 600 }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>{selectedHunt.title} — Photo Reviews</h2>
+          <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: '1rem' }}>{selectedHunt.title} — {t('admin.reviews.heading')}</h2>
           {reviews.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', color: 'var(--text3)', padding: '2rem' }}>
-              No pending photo submissions.
+              {t('admin.reviews.noPending')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -497,11 +499,11 @@ export default function Admin() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 12 }}>
                     <div>
                       <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 2 }}>{r.username}</div>
-                      <div style={{ fontSize: 12, color: 'var(--text3)' }}>Clue: {r.clueTitle} · +{r.points} pts</div>
+                      <div style={{ fontSize: 12, color: 'var(--text3)' }}>{t('admin.reviews.clueLabel', { title: r.clueTitle, points: r.points })}</div>
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <button className="btn-primary" style={{ fontSize: 12 }} onClick={() => reviewPhoto(r.id, true)}>✓ Approve</button>
-                      <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => reviewPhoto(r.id, false)}>✕ Reject</button>
+                      <button className="btn-primary" style={{ fontSize: 12 }} onClick={() => reviewPhoto(r.id, true)}>{t('admin.reviews.approve')}</button>
+                      <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => reviewPhoto(r.id, false)}>{t('admin.reviews.reject')}</button>
                     </div>
                   </div>
                   {r.photoUrl && (
@@ -518,19 +520,19 @@ export default function Admin() {
       {tab === 'images' && selectedHunt && (
         <div style={{ maxWidth: 620 }}>
           <div style={{ marginBottom: '1rem' }}>
-            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{selectedHunt.title} — Cloudinary Images</h2>
+            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 4 }}>{selectedHunt.title} — {t('admin.images.heading')}</h2>
             <p style={{ fontSize: 13, color: 'var(--text2)' }}>
-              Includes clue hint images and player proof photos. Deleting removes the file from Cloudinary and unlinks it.
+              {t('admin.images.subtitle')}
             </p>
             {!CLOUDINARY_API_SECRET && (
               <div className="alert alert-error" style={{ marginTop: 10 }}>
-                ⚠️ Add <code>VITE_CLOUDINARY_API_KEY</code> and <code>VITE_CLOUDINARY_API_SECRET</code> to your <code>.env</code> file to enable deletion.
+                ⚠️ {t('admin.images.missingEnv')}
               </div>
             )}
           </div>
           {huntImages.length === 0 ? (
             <div className="card" style={{ textAlign: 'center', color: 'var(--text3)', padding: '2rem' }}>
-              No images found for this hunt.
+              {t('admin.images.noImages')}
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
@@ -547,7 +549,7 @@ export default function Admin() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 2 }}>{img.label}</div>
                       <div style={{ fontSize: 12, color: 'var(--text3)' }}>
-                        {img.kind === 'hint' ? '🖼️ Clue hint' : '📸 Player proof'} · {img.sub}
+                        {img.kind === 'hint' ? t('admin.images.hintLabel') : t('admin.images.proofLabel')} · {img.sub}
                       </div>
                     </div>
                     <button
@@ -556,7 +558,7 @@ export default function Admin() {
                       disabled={isDeleting || !CLOUDINARY_API_SECRET}
                       onClick={() => handleDeleteImage(img)}
                     >
-                      {isDeleting ? '⏳ Deleting…' : '🗑️ Delete'}
+                      {isDeleting ? t('admin.images.deleting') : t('admin.images.delete')}
                     </button>
                   </div>
                 )
@@ -570,8 +572,8 @@ export default function Admin() {
       {tab === 'clues' && selectedHunt && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
           <div>
-            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>Clues ({clues.length})</h2>
-            {clues.length === 0 && <p style={{ color: 'var(--text3)', fontSize: 14 }}>No clues yet. Add some →</p>}
+            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: 12 }}>{t('admin.clues.heading', { count: clues.length })}</h2>
+            {clues.length === 0 && <p style={{ color: 'var(--text3)', fontSize: 14 }}>{t('admin.clues.noClues')}</p>}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {clues.map(clue => (
                 <div key={clue.id} className="card" style={{ padding: '0.75rem 1rem' }}>
@@ -602,81 +604,81 @@ export default function Admin() {
             </div>
             {qrDataUrl && (
               <div className="card" style={{ marginTop: 16, textAlign: 'center' }}>
-                <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>QR code — print and place at location</p>
+                <p style={{ fontSize: 13, fontWeight: 500, marginBottom: 8 }}>{t('admin.clues.qrPrintLabel')}</p>
                 <img src={qrDataUrl} alt="QR code" style={{ width: 200, height: 200, borderRadius: 8 }} />
                 <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 8, wordBreak: 'break-all' }}>{qrToken}</p>
                 <a href={qrDataUrl} download="clue-qr.png">
-                  <button className="btn-ghost" style={{ marginTop: 8, fontSize: 12 }}>Download QR</button>
+                  <button className="btn-ghost" style={{ marginTop: 8, fontSize: 12 }}>{t('admin.clues.downloadQr')}</button>
                 </a>
               </div>
             )}
           </div>
 
           <div className="card">
-            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '1rem' }}>Add a clue</h2>
+            <h2 style={{ fontSize: 15, fontWeight: 600, marginBottom: '1rem' }}>{t('admin.clues.addHeading')}</h2>
             <form onSubmit={createClue}>
               <div className="form-group">
-                <label>Title</label>
-                <input placeholder="The old clock tower" required value={newClue.title} onChange={e => setNewClue(p => ({...p, title: e.target.value}))} />
+                <label>{t('admin.clues.labelTitle')}</label>
+                <input placeholder={t('admin.clues.placeholderTitle')} required value={newClue.title} onChange={e => setNewClue(p => ({...p, title: e.target.value}))} />
               </div>
               <div className="form-group">
-                <label>Riddle / hint text</label>
+                <label>{t('admin.clues.labelRiddle')}</label>
                 <textarea rows={3} required style={{ resize: 'vertical' }} value={newClue.riddle} onChange={e => setNewClue(p => ({...p, riddle: e.target.value}))} />
               </div>
               <div className="form-group">
-                <label>Clue type</label>
+                <label>{t('admin.clues.labelType')}</label>
                 <select value={newClue.clueType} onChange={e => { setNewClue(p => ({...p, clueType: e.target.value})); setClueImageUrl(null) }}>
                   {CLUE_TYPES.map(t => <option key={t} value={t}>{CLUE_TYPE_ICONS[t]} {t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                 </select>
               </div>
               {newClue.clueType === 'text' && (
                 <div className="form-group">
-                  <label>Correct answer</label>
-                  <input placeholder="clock tower" required value={newClue.answer} onChange={e => setNewClue(p => ({...p, answer: e.target.value}))} />
+                  <label>{t('admin.clues.labelAnswer')}</label>
+                  <input placeholder={t('admin.clues.placeholderAnswer')} required value={newClue.answer} onChange={e => setNewClue(p => ({...p, answer: e.target.value}))} />
                 </div>
               )}
               {newClue.clueType === 'gps' && (
                 <>
                   <div className="form-row" style={{ marginBottom: '0.75rem' }}>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label>Latitude</label>
+                      <label>{t('admin.clues.labelLat')}</label>
                       <input type="number" step="any" placeholder="51.5074" required value={newClue.lat} onChange={e => setNewClue(p => ({...p, lat: e.target.value}))} />
                     </div>
                     <div className="form-group" style={{ marginBottom: 0 }}>
-                      <label>Longitude</label>
+                      <label>{t('admin.clues.labelLng')}</label>
                       <input type="number" step="any" placeholder="-0.1278" required value={newClue.lng} onChange={e => setNewClue(p => ({...p, lng: e.target.value}))} />
                     </div>
                   </div>
                   <div className="form-group">
-                    <label>Radius (meters)</label>
+                    <label>{t('admin.clues.labelRadius')}</label>
                     <input type="number" min={10} max={500} value={newClue.gpsRadiusMeters} onChange={e => setNewClue(p => ({...p, gpsRadiusMeters: e.target.value}))} />
                   </div>
                 </>
               )}
               {newClue.clueType === 'qr' && (
                 <p style={{ fontSize: 12, color: 'var(--text2)', marginBottom: '0.75rem', background: 'var(--surface2)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius)' }}>
-                  📷 A unique QR code will be generated. Print and place it at the location.
+                  {t('admin.clues.qrHint')}
                 </p>
               )}
               {newClue.clueType === 'image' && (
                 <div className="form-group">
-                  <label>Hint image</label>
+                  <label>{t('admin.clues.labelHintImage')}</label>
                   <input ref={clueImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleClueImageUpload} />
                   {clueImageUrl ? (
                     <div>
                       <img src={clueImageUrl} alt="preview" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
-                      <button type="button" className="btn-ghost" style={{ fontSize: 12, width: '100%' }} onClick={() => clueImgRef.current.click()}>Change image</button>
+                      <button type="button" className="btn-ghost" style={{ fontSize: 12, width: '100%' }} onClick={() => clueImgRef.current.click()}>{t('admin.clues.changeImage')}</button>
                     </div>
                   ) : (
                     <button type="button" className="btn-ghost" style={{ width: '100%' }} onClick={() => clueImgRef.current.click()} disabled={uploadingClueImg}>
-                      {uploadingClueImg ? 'Uploading…' : '🖼️ Upload hint image'}
+                      {uploadingClueImg ? t('admin.clues.uploadingImage') : t('admin.clues.uploadImage')}
                     </button>
                   )}
-                  <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>Players will see this image. They must submit a proof photo which you review.</p>
+                  <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>{t('admin.clues.playersSeeImage')}</p>
                 </div>
               )}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
-                <label>Difficulty level</label>
+                <label>{t('admin.clues.labelDifficulty')}</label>
                 <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
                   {[1,2,3,4,5].map(d => (
                     <button key={d} type="button" className="star-btn"
@@ -694,12 +696,12 @@ export default function Admin() {
                     {DIFFICULTY_LABELS[newClue.difficulty]}
                   </span>
                   <span style={{ fontSize: 12, color: 'var(--text3)', fontWeight: 600 }}>
-                    = {DIFFICULTY_POINTS[newClue.difficulty]} points
+                    {t('admin.clues.pointsLabel', { points: DIFFICULTY_POINTS[newClue.difficulty] })}
                   </span>
                 </div>
               </div>
               <button className="btn-primary" type="submit" disabled={saving || (newClue.clueType === 'image' && !clueImageUrl)} style={{ width: '100%' }}>
-                {saving ? 'Adding…' : 'Add clue'}
+                {saving ? t('admin.clues.adding') : t('admin.clues.add')}
               </button>
             </form>
           </div>

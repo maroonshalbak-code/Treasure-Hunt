@@ -32,7 +32,21 @@
     "admin": "Admin",
     "you": "(you)",
     "liveLeaderboard": "Live leaderboard",
-    "liveSubtitle": "Updates in real time as players find clues"
+    "liveSubtitle": "Updates in real time as players find clues",
+    "teamsLabel": "Teams",
+    "unassigned": "Unassigned",
+    "filterAll": "All",
+    "filterStatus": "STATUS",
+    "filterType": "TYPE",
+    "filterLevel": "LEVEL",
+    "filterOpen": "Open",
+    "filterPending": "Pending",
+    "filterDone": "Done",
+    "noFilterResults": "No clues match these filters",
+    "clueApproved": "Clue approved! Points added",
+    "clueRejected": "Clue rejected",
+    "pendingPhotos_one": "⏳ {{count}} photo awaiting admin review",
+    "pendingPhotos_other": "⏳ {{count}} photos awaiting admin review"
   },
   "clue": {
     "riddle": "Riddle",
@@ -69,10 +83,21 @@
     "imageInstruction": "Find the location shown in the photo, then take a photo as proof.",
     "takePhoto": "📸 Take / upload photo",
     "uploading": "Uploading photo…",
-    "uploadFailed": "Upload failed: {{error}}"
+    "uploadFailed": "Upload failed: {{error}}",
+    "statusOpen": "Open",
+    "statusDone": "Done",
+    "statusReview": "Review",
+    "diffEasy": "Easy",
+    "diffMedium": "Medium",
+    "diffHard": "Hard",
+    "diffVeryHard": "Very Hard",
+    "diffExpert": "Expert"
   },
   "leaderboard": {
-    "empty": "No one has found a clue yet. Be first!"
+    "empty": "No one has found a clue yet. Be first!",
+    "noMembers": "No members yet",
+    "cluesFound": "clues found",
+    "pts": "pts"
   },
   "profile": {
     "title": "Your profile",
@@ -105,5 +130,99 @@
     "en": "English",
     "ar": "العربية",
     "he": "עברית"
+  },
+  "admin": {
+    "title": "Admin panel",
+    "tabs": {
+      "hunts": "Hunts",
+      "clues": "Clues",
+      "participants": "Participants",
+      "reviews": "Reviews",
+      "images": "🖼️ Images",
+      "newHunt": "+ New hunt"
+    },
+    "hunts": {
+      "noHunts": "No hunts yet. Create one.",
+      "active": "Active",
+      "inactive": "Inactive",
+      "teams": "Teams",
+      "clueCount": "{{count}} clues",
+      "playerCount": "{{count}} players",
+      "btnParticipants": "👥 Participants",
+      "btnClues": "🗝️ Clues",
+      "btnReviews": "📸 Reviews",
+      "btnImages": "🖼️ Images",
+      "btnDeactivate": "⏸ Deactivate",
+      "btnActivate": "▶ Activate",
+      "btnDelete": "🗑️ Delete"
+    },
+    "newHunt": {
+      "heading": "Create a new hunt",
+      "labelTitle": "Title",
+      "placeholderTitle": "City centre treasure hunt",
+      "labelDesc": "Description (optional)",
+      "labelMode": "Hunt mode",
+      "modeIndividual": "👤 Individual",
+      "modeTeams": "👥 Teams",
+      "labelTeam1": "Team 1 name",
+      "labelTeam2": "Team 2 name",
+      "labelStartsAt": "Starts at (optional)",
+      "labelEndsAt": "Ends at (optional)",
+      "creating": "Creating…",
+      "create": "Create hunt"
+    },
+    "participants": {
+      "heading": "Participants",
+      "subtitle": "Only checked users can see and play this hunt.",
+      "subtitleTeams": "Assign each player to a team.",
+      "noOne": "No one can join yet.",
+      "noUsers": "No registered users yet.",
+      "allowed": "✓ Allowed",
+      "noAccess": "No access"
+    },
+    "reviews": {
+      "heading": "Photo Reviews",
+      "noPending": "No pending photo submissions.",
+      "clueLabel": "Clue: {{title}} · +{{points}} pts",
+      "approve": "✓ Approve",
+      "reject": "✕ Reject"
+    },
+    "images": {
+      "heading": "Cloudinary Images",
+      "subtitle": "Includes clue hint images and player proof photos. Deleting removes the file from Cloudinary and unlinks it.",
+      "missingEnv": "Add VITE_CLOUDINARY_API_KEY and VITE_CLOUDINARY_API_SECRET to your .env file to enable deletion.",
+      "noImages": "No images found for this hunt.",
+      "hintLabel": "🖼️ Clue hint",
+      "proofLabel": "📸 Player proof",
+      "deleting": "⏳ Deleting…",
+      "delete": "🗑️ Delete"
+    },
+    "clues": {
+      "heading": "Clues ({{count}})",
+      "noClues": "No clues yet. Add some →",
+      "addHeading": "Add a clue",
+      "labelTitle": "Title",
+      "placeholderTitle": "The old clock tower",
+      "labelRiddle": "Riddle / hint text",
+      "labelType": "Clue type",
+      "labelAnswer": "Correct answer",
+      "placeholderAnswer": "clock tower",
+      "labelLat": "Latitude",
+      "labelLng": "Longitude",
+      "labelRadius": "Radius (meters)",
+      "labelHintImage": "Hint image",
+      "qrHint": "📷 A unique QR code will be generated. Print and place it at the location.",
+      "changeImage": "Change image",
+      "uploadImage": "🖼️ Upload hint image",
+      "uploadingImage": "Uploading…",
+      "playersSeeImage": "Players will see this image. They must submit a proof photo which you review.",
+      "labelDifficulty": "Difficulty level",
+      "pointsLabel": "= {{points}} points",
+      "qrPrintLabel": "QR code — print and place at location",
+      "downloadQr": "Download QR",
+      "adding": "Adding…",
+      "add": "Add clue"
+    },
+    "deleteConfirm": "Delete failed: {{error}}"
   }
 }

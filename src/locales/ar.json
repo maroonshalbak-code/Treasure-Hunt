@@ -32,7 +32,21 @@
     "admin": "مشرف",
     "you": "(أنت)",
     "liveLeaderboard": "لوحة المتصدرين المباشرة",
-    "liveSubtitle": "تتحدث في الوقت الفعلي مع اكتشاف اللاعبين للأدلة"
+    "liveSubtitle": "تتحدث في الوقت الفعلي مع اكتشاف اللاعبين للأدلة",
+    "teamsLabel": "فرق",
+    "unassigned": "غير مخصص",
+    "filterAll": "الكل",
+    "filterStatus": "الحالة",
+    "filterType": "النوع",
+    "filterLevel": "المستوى",
+    "filterOpen": "مفتوح",
+    "filterPending": "قيد المراجعة",
+    "filterDone": "تم",
+    "noFilterResults": "لا توجد أدلة تطابق هذه المرشحات",
+    "clueApproved": "تم قبول الدليل! تمت إضافة النقاط",
+    "clueRejected": "تم رفض الدليل",
+    "pendingPhotos_one": "⏳ {{count}} صورة بانتظار المراجعة",
+    "pendingPhotos_other": "⏳ {{count}} صور بانتظار المراجعة"
   },
   "clue": {
     "riddle": "لغز",
@@ -69,10 +83,21 @@
     "imageInstruction": "ابحث عن الموقع الظاهر في الصورة، ثم التقط صورة كإثبات.",
     "takePhoto": "📸 التقط / ارفع صورة",
     "uploading": "جارٍ رفع الصورة…",
-    "uploadFailed": "فشل الرفع: {{error}}"
+    "uploadFailed": "فشل الرفع: {{error}}",
+    "statusOpen": "مفتوح",
+    "statusDone": "تم",
+    "statusReview": "مراجعة",
+    "diffEasy": "سهل",
+    "diffMedium": "متوسط",
+    "diffHard": "صعب",
+    "diffVeryHard": "صعب جداً",
+    "diffExpert": "خبير"
   },
   "leaderboard": {
-    "empty": "لم يجد أحد دليلاً بعد. كن الأول!"
+    "empty": "لم يجد أحد دليلاً بعد. كن الأول!",
+    "noMembers": "لا أعضاء بعد",
+    "cluesFound": "أدلة تم إيجادها",
+    "pts": "نقطة"
   },
   "profile": {
     "title": "ملفك الشخصي",
@@ -105,5 +130,99 @@
     "en": "English",
     "ar": "العربية",
     "he": "עברית"
+  },
+  "admin": {
+    "title": "لوحة الإدارة",
+    "tabs": {
+      "hunts": "الرحلات",
+      "clues": "الأدلة",
+      "participants": "المشاركون",
+      "reviews": "المراجعات",
+      "images": "🖼️ الصور",
+      "newHunt": "+ رحلة جديدة"
+    },
+    "hunts": {
+      "noHunts": "لا توجد رحلات بعد. أنشئ واحدة.",
+      "active": "نشطة",
+      "inactive": "غير نشطة",
+      "teams": "فرق",
+      "clueCount": "{{count}} أدلة",
+      "playerCount": "{{count}} لاعبون",
+      "btnParticipants": "👥 المشاركون",
+      "btnClues": "🗝️ الأدلة",
+      "btnReviews": "📸 المراجعات",
+      "btnImages": "🖼️ الصور",
+      "btnDeactivate": "⏸ إيقاف",
+      "btnActivate": "▶ تفعيل",
+      "btnDelete": "🗑️ حذف"
+    },
+    "newHunt": {
+      "heading": "إنشاء رحلة جديدة",
+      "labelTitle": "العنوان",
+      "placeholderTitle": "رحلة كنز وسط المدينة",
+      "labelDesc": "الوصف (اختياري)",
+      "labelMode": "نمط الرحلة",
+      "modeIndividual": "👤 فردي",
+      "modeTeams": "👥 فرق",
+      "labelTeam1": "اسم الفريق الأول",
+      "labelTeam2": "اسم الفريق الثاني",
+      "labelStartsAt": "تاريخ البداية (اختياري)",
+      "labelEndsAt": "تاريخ النهاية (اختياري)",
+      "creating": "جارٍ الإنشاء…",
+      "create": "إنشاء رحلة"
+    },
+    "participants": {
+      "heading": "المشاركون",
+      "subtitle": "المستخدمون المحددون فقط يمكنهم رؤية هذه الرحلة والمشاركة فيها.",
+      "subtitleTeams": "خصص كل لاعب لفريق.",
+      "noOne": "لا أحد يستطيع الانضمام بعد.",
+      "noUsers": "لا يوجد مستخدمون مسجلون بعد.",
+      "allowed": "✓ مسموح",
+      "noAccess": "لا يوجد وصول"
+    },
+    "reviews": {
+      "heading": "مراجعة الصور",
+      "noPending": "لا توجد صور معلقة للمراجعة.",
+      "clueLabel": "الدليل: {{title}} · +{{points}} نقطة",
+      "approve": "✓ قبول",
+      "reject": "✕ رفض"
+    },
+    "images": {
+      "heading": "صور Cloudinary",
+      "subtitle": "تشمل صور تلميحات الأدلة وصور إثبات اللاعبين. الحذف يزيل الملف من Cloudinary وإلغاء ربطه.",
+      "missingEnv": "أضف VITE_CLOUDINARY_API_KEY و VITE_CLOUDINARY_API_SECRET إلى ملف .env لتفعيل الحذف.",
+      "noImages": "لا توجد صور لهذه الرحلة.",
+      "hintLabel": "🖼️ صورة تلميح",
+      "proofLabel": "📸 صورة إثبات",
+      "deleting": "⏳ جارٍ الحذف…",
+      "delete": "🗑️ حذف"
+    },
+    "clues": {
+      "heading": "الأدلة ({{count}})",
+      "noClues": "لا توجد أدلة بعد. أضف بعضها ←",
+      "addHeading": "إضافة دليل",
+      "labelTitle": "العنوان",
+      "placeholderTitle": "برج الساعة القديم",
+      "labelRiddle": "نص اللغز / التلميح",
+      "labelType": "نوع الدليل",
+      "labelAnswer": "الإجابة الصحيحة",
+      "placeholderAnswer": "برج الساعة",
+      "labelLat": "خط العرض",
+      "labelLng": "خط الطول",
+      "labelRadius": "النطاق (بالأمتار)",
+      "labelHintImage": "صورة التلميح",
+      "qrHint": "📷 سيتم إنشاء رمز QR فريد. اطبعه وضعه في الموقع.",
+      "changeImage": "تغيير الصورة",
+      "uploadImage": "🖼️ رفع صورة التلميح",
+      "uploadingImage": "جارٍ الرفع…",
+      "playersSeeImage": "سيرى اللاعبون هذه الصورة. عليهم إرسال صورة إثبات تقوم بمراجعتها.",
+      "labelDifficulty": "مستوى الصعوبة",
+      "pointsLabel": "= {{points}} نقطة",
+      "qrPrintLabel": "رمز QR — اطبعه وضعه في الموقع",
+      "downloadQr": "تحميل QR",
+      "adding": "جارٍ الإضافة…",
+      "add": "إضافة دليل"
+    },
+    "deleteConfirm": "فشل الحذف: {{error}}"
   }
 }

@@ -89,8 +89,8 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
             }}>
               <div style={{ fontSize: 18, marginBottom: 2 }}>{i === 0 ? '🏆' : '🥈'}</div>
               <div style={{ fontWeight: 700, fontSize: 15, color: team.color }}>{team.name}</div>
-              <div style={{ fontWeight: 700, fontSize: 20, color: team.color }}>{team.totalPoints} pts</div>
-              <div style={{ fontSize: 12, color: 'var(--text3)' }}>{team.cluesFound} clues found</div>
+              <div style={{ fontWeight: 700, fontSize: 20, color: team.color }}>{team.totalPoints} {t('leaderboard.pts')}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)' }}>{team.cluesFound} {t('leaderboard.cluesFound')}</div>
             </div>
           ))}
         </div>
@@ -103,7 +103,7 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
               <span style={{ fontSize: 13, fontWeight: 600, color: team.color }}>{team.name}</span>
             </div>
             {team.members.length === 0 ? (
-              <div style={{ padding: '0.75rem 1.25rem', fontSize: 13, color: 'var(--text3)' }}>No members yet</div>
+              <div style={{ padding: '0.75rem 1.25rem', fontSize: 13, color: 'var(--text3)' }}>{t('leaderboard.noMembers')}</div>
             ) : (
               team.members.map((row, i) => {
                 const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
@@ -116,7 +116,7 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
                       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
                         <span style={{ fontWeight: 500, fontSize: 13 }}>{row.username}</span>
                         <span style={{ fontSize: 12, color:'var(--text2)', flexShrink: 0 }}>
-                          {row.cluesFound}/{totalClues} · <span style={{ color: team.color, fontWeight:600 }}>{row.totalPoints} pts</span>
+                          {row.cluesFound}/{totalClues} · <span style={{ color: team.color, fontWeight:600 }}>{row.totalPoints} {t('leaderboard.pts')}</span>
                         </span>
                       </div>
                       <div className="progress-bar-wrap" style={{ marginTop: 4 }}>
@@ -141,7 +141,7 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
                   <span style={{ fontWeight: 500, fontSize: 13 }}>{row.username}</span>
-                  <span style={{ fontSize: 12, color:'var(--text2)' }}>{row.totalPoints} pts</span>
+                  <span style={{ fontSize: 12, color:'var(--text2)' }}>{row.totalPoints} {t('leaderboard.pts')}</span>
                 </div>
                 <div className="progress-bar-wrap" style={{ marginTop: 4 }}>
                   <div className="progress-bar-fill" style={{ width: `${pct}%` }} />
@@ -168,7 +168,7 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
               <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline' }}>
                 <span style={{ fontWeight: 500, fontSize: 14 }}>{row.username}</span>
                 <span style={{ fontSize: 13, color:'var(--text2)', flexShrink: 0 }}>
-                  {row.cluesFound}/{totalClues} · <span style={{ color:'var(--accent)', fontWeight:600 }}>{row.totalPoints} pts</span>
+                  {row.cluesFound}/{totalClues} · <span style={{ color:'var(--accent)', fontWeight:600 }}>{row.totalPoints} {t('leaderboard.pts')}</span>
                 </span>
               </div>
               <div className="progress-bar-wrap" style={{ marginTop: 4 }}>
