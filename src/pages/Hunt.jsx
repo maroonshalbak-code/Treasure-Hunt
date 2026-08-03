@@ -23,6 +23,7 @@ export default function Hunt() {
   const [tab, setTab] = useState('clues')
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState([])
+  const [winner, setWinner] = useState(null) // { name, isTeam }
   const [complexityFilter, setComplexityFilter] = useState(0)   // 0 = all, 1-5
   const [statusFilter, setStatusFilter] = useState('all')        // all | open | pending | completed
   const [typeFilter, setTypeFilter] = useState('all')            // all | text | gps | qr | image
@@ -31,6 +32,26 @@ export default function Hunt() {
     const id = Date.now() + Math.random()
     setNotifications(prev => [...prev, { id, type, clueTitle, username }])
     setTimeout(() => setNotifications(prev => prev.filter(n => n.id !== id)), 5500)
+  }
+
+  function playWinSound() {
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)()
+      const fanfare = [
+        [523, 0], [523, 0.1], [523, 0.2], [659, 0.35],
+        [523, 0.55], [659, 0.65], [784, 0.75],
+      ]
+      fanfare.forEach(([freq, when]) => {
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+        osc.connect(gain); gain.connect(ctx.destination)
+        osc.frequency.value = freq
+        gain.gain.setValueAtTime(0.3, ctx.currentTime + when)
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + when + 0.3)
+        osc.start(ctx.currentTime + when)
+        osc.stop(ctx.currentTime + when + 0.3)
+      })
+    } catch {}
   }
 
   function dismissNotification(id) {
@@ -100,6 +121,35 @@ export default function Hunt() {
           })
           setCompletedIds(completed)
           setPendingIds(pending)
+
+          // Check win condition — all clues approved
+          if (cluesData.length > 0 && completed.size >= cluesData.length) {
+            // Compute winner from approved progress docs
+            const byPlayer = {}
+            snap.docs.forEach(d => {
+              const { playerId, username, points, status } = d.data()
+              if (status !== 'approved') return
+              if (!byPlayer[playerId]) byPlayer[playerId] = { username, points: 0 }
+              byPlayer[playerId].points += points || 0
+            })
+            const sorted = Object.values(byPlayer).sort((a, b) => b.points - a.points)
+            const isTeams = huntData.mode === 'teams'
+            if (isTeams && huntData.teamNames && huntData.teamAssignments) {
+              const teamTotals = {}
+              sorted.forEach(p => {
+                const tid = huntData.teamAssignments[Object.keys(byPlayer).find(k => byPlayer[k] === p)]
+                if (tid !== undefined) {
+                  const name = huntData.teamNames[tid] || `Team ${tid + 1}`
+                  teamTotals[name] = (teamTotals[name] || 0) + p.points
+                }
+              })
+              const topTeam = Object.entries(teamTotals).sort((a, b) => b[1] - a[1])[0]
+              setWinner({ name: topTeam?.[0] || 'The team', isTeam: true })
+            } else {
+              setWinner({ name: sorted[0]?.username || 'A player', isTeam: false })
+            }
+            playWinSound()
+          }
 
           // Skip notifications on the initial load snapshot
           if (!isFirstSnapshot) {
@@ -389,6 +439,44 @@ export default function Hunt() {
           </div>
         )}
       </div>
+
+      {/* Win modal */}
+      {winner && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          zIndex: 10000, padding: '1.5rem',
+        }}>
+          <div style={{
+            background: 'var(--surface)', borderRadius: 20, padding: '2.5rem 2rem',
+            textAlign: 'center', maxWidth: 360, width: '100%',
+            border: '3px solid var(--accent)',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
+            animation: 'toastIn 0.4s cubic-bezier(0.34,1.56,0.64,1)',
+          }}>
+            <div style={{ fontSize: 72, marginBottom: 12 }}>🏆</div>
+            <h2 style={{ fontSize: 26, fontWeight: 900, color: 'var(--primary)', marginBottom: 8 }}>
+              {winner.isTeam ? '🎉 Team wins!' : '🎉 We have a winner!'}
+            </h2>
+            <div style={{
+              fontSize: 28, fontWeight: 900, color: 'var(--accent)',
+              marginBottom: 8, padding: '0.5rem 1rem',
+              background: 'var(--surface2)', borderRadius: 12,
+            }}>
+              {winner.isTeam ? '👥' : '🥇'} {winner.name}
+            </div>
+            <p style={{ color: 'var(--text2)', fontSize: 14, marginBottom: 24 }}>
+              {winner.isTeam
+                ? `${winner.name} completed all clues first!`
+                : `${winner.name} completed all clues first!`}
+            </p>
+            <button className="btn-primary" style={{ width: '100%', fontSize: 16, padding: '0.75rem' }}
+              onClick={() => setWinner(null)}>
+              🗺️ View results
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Toast notifications */}
       <div style={{ position: 'fixed', bottom: '1.5rem', right: '1.5rem', display: 'flex', flexDirection: 'column', gap: 10, zIndex: 9999, pointerEvents: 'none' }}>
