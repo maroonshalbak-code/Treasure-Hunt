@@ -89,7 +89,7 @@ export default function Admin() {
   const [newClue, setNewClue] = useState({
     title: '', riddle: '', clueType: 'text', answers: [''],
     lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1,
-    targetDate: '', dateTolerance: 0
+    targetDate: '', dateTolerance: 0, imageMode: 'hint'
   })
 
   useEffect(() => { fetchHunts() }, [])
@@ -250,7 +250,7 @@ export default function Admin() {
 
       await addDoc(collection(db, 'hunts', selectedHunt.id, 'clues'), payload)
       setMsg({ type: 'success', text: t('admin.clues.added') })
-      setNewClue({ title: '', riddle: '', clueType: 'text', answers: [''], lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1, targetDate: '', dateTolerance: 0 })
+      setNewClue({ title: '', riddle: '', clueType: 'text', answers: [''], lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1, targetDate: '', dateTolerance: 0, imageMode: 'hint' })
       setClueImageUrl(null)
 
       if (newClue.clueType === 'qr') {
@@ -801,19 +801,49 @@ export default function Admin() {
               )}
               {newClue.clueType === 'image' && (
                 <div className="form-group">
-                  <label>{t('admin.clues.labelHintImage')}</label>
-                  <input ref={clueImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleClueImageUpload} />
-                  {clueImageUrl ? (
-                    <div>
-                      <img src={clueImageUrl} alt="preview" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
-                      <button type="button" className="btn-ghost" style={{ fontSize: 12, width: '100%' }} onClick={() => clueImgRef.current.click()}>{t('admin.clues.changeImage')}</button>
-                    </div>
-                  ) : (
-                    <button type="button" className="btn-ghost" style={{ width: '100%' }} onClick={() => clueImgRef.current.click()} disabled={uploadingClueImg}>
-                      {uploadingClueImg ? t('admin.clues.uploadingImage') : t('admin.clues.uploadImage')}
-                    </button>
+                  <label style={{ marginBottom: 6, display: 'block' }}>Image clue mode</label>
+                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+                    {[
+                      { value: 'hint', label: '🖼️ Show reference image', desc: 'Upload a photo; players must find that location' },
+                      { value: 'prompt', label: '📝 Open photo challenge', desc: 'No image needed; players photograph what you describe' }
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => { setNewClue(p => ({ ...p, imageMode: opt.value })); if (opt.value === 'prompt') { setClueImageUrl(null) } }}
+                        style={{
+                          flex: 1, padding: '10px 8px', borderRadius: 'var(--radius)', border: '2px solid',
+                          borderColor: newClue.imageMode === opt.value ? 'var(--primary)' : 'var(--border)',
+                          background: newClue.imageMode === opt.value ? 'rgba(var(--primary-rgb,99,102,241),0.08)' : 'var(--surface)',
+                          cursor: 'pointer', textAlign: 'left'
+                        }}
+                      >
+                        <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3 }}>{opt.label}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text3)', lineHeight: 1.4 }}>{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                  {newClue.imageMode === 'hint' && (
+                    <>
+                      <input ref={clueImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleClueImageUpload} />
+                      {clueImageUrl ? (
+                        <div>
+                          <img src={clueImageUrl} alt="preview" style={{ width: '100%', maxHeight: 180, objectFit: 'cover', borderRadius: 8, marginBottom: 8 }} />
+                          <button type="button" className="btn-ghost" style={{ fontSize: 12, width: '100%' }} onClick={() => clueImgRef.current.click()}>{t('admin.clues.changeImage')}</button>
+                        </div>
+                      ) : (
+                        <button type="button" className="btn-ghost" style={{ width: '100%' }} onClick={() => clueImgRef.current.click()} disabled={uploadingClueImg}>
+                          {uploadingClueImg ? t('admin.clues.uploadingImage') : t('admin.clues.uploadImage')}
+                        </button>
+                      )}
+                      <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>{t('admin.clues.playersSeeImage')}</p>
+                    </>
                   )}
-                  <p style={{ fontSize: 11, color: 'var(--text3)', marginTop: 6 }}>{t('admin.clues.playersSeeImage')}</p>
+                  {newClue.imageMode === 'prompt' && (
+                    <p style={{ fontSize: 12, color: 'var(--text2)', background: 'var(--surface2)', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius)' }}>
+                      Players will read your riddle and upload a photo as their answer. No hint image required.
+                    </p>
+                  )}
                 </div>
               )}
               {newClue.clueType === 'date' && (
@@ -851,7 +881,7 @@ export default function Admin() {
                   </span>
                 </div>
               </div>
-              <button className="btn-primary" type="submit" disabled={saving || (newClue.clueType === 'image' && !clueImageUrl)} style={{ width: '100%' }}>
+              <button className="btn-primary" type="submit" disabled={saving} style={{ width: '100%' }}>
                 {saving ? t('admin.clues.adding') : t('admin.clues.add')}
               </button>
             </form>

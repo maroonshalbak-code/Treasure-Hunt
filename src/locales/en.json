@@ -81,6 +81,7 @@
     "cameraError": "Camera error: {{error}}",
     "invalidToken": "Invalid QR token.",
     "imageInstruction": "Find the location shown in the photo, then take a photo as proof.",
+    "imagePromptInstruction": "Take a photo that matches the description above and upload it as your answer.",
     "takePhoto": "📸 Take / upload photo",
     "uploading": "Uploading photo…",
     "uploadFailed": "Upload failed: {{error}}",

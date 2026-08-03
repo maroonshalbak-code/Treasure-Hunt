@@ -81,6 +81,7 @@
     "cameraError": "שגיאת מצלמה: {{error}}",
     "invalidToken": "קוד QR לא תקין.",
     "imageInstruction": "מצא את המיקום המופיע בתמונה, ואז צלם תמונה כהוכחה.",
+    "imagePromptInstruction": "צלם תמונה שמתאימה לתיאור למעלה והעלה אותה כתשובתך.",
     "takePhoto": "📸 צלם / העלה תמונה",
     "uploading": "מעלה תמונה…",
     "uploadFailed": "ההעלאה נכשלה: {{error}}",

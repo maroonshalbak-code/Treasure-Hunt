@@ -81,6 +81,7 @@
     "cameraError": "خطأ في الكاميرا: {{error}}",
     "invalidToken": "رمز QR غير صالح.",
     "imageInstruction": "ابحث عن الموقع الظاهر في الصورة، ثم التقط صورة كإثبات.",
+    "imagePromptInstruction": "التقط صورة تتناسب مع الوصف أعلاه وارفعها كإجابتك.",
     "takePhoto": "📸 التقط / ارفع صورة",
     "uploading": "جارٍ رفع الصورة…",
     "uploadFailed": "فشل الرفع: {{error}}",

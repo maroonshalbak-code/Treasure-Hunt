@@ -323,7 +323,9 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
 
           {clue.clueType === 'image' && (
             <div>
-              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 10 }}>{t('clue.imageInstruction')}</p>
+              <p style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 10 }}>
+                {clue.imageUrl ? t('clue.imageInstruction') : t('clue.imagePromptInstruction')}
+              </p>
               <input ref={proofRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleProofUpload} />
               <button className="btn-primary" style={{ width: '100%' }} disabled={loading} onClick={() => proofRef.current.click()}>
                 {loading ? t('clue.uploading') : t('clue.takePhoto')}
