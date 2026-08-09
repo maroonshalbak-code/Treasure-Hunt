@@ -282,7 +282,20 @@ export default function Admin() {
     await updateDoc(doc(db, 'playerProgress', progressId), {
       status: approve ? 'approved' : 'rejected'
     })
-    setReviews(prev => prev.filter(r => r.id !== progressId))
+
+    // If approving, delete all other pending submissions for the same clue
+    if (approve) {
+      const approved = reviews.find(r => r.id === progressId)
+      if (approved) {
+        const others = reviews.filter(r => r.id !== progressId && r.clueId === approved.clueId)
+        await Promise.all(others.map(r => deleteDoc(doc(db, 'playerProgress', r.id))))
+        setReviews(prev => prev.filter(r => r.clueId !== approved.clueId))
+      } else {
+        setReviews(prev => prev.filter(r => r.id !== progressId))
+      }
+    } else {
+      setReviews(prev => prev.filter(r => r.id !== progressId))
+    }
   }
 
   async function fetchHuntImages(huntId) {
