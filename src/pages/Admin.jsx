@@ -275,7 +275,7 @@ export default function Admin() {
   async function deleteClue(huntId, clueId) {
     if (!confirm('Delete this clue?')) return
     await deleteDoc(doc(db, 'hunts', huntId, 'clues', clueId))
-    fetchClues(huntId)
+    setClues(prev => prev.filter(c => c.id !== clueId))
   }
 
   async function reviewPhoto(progressId, approve) {
