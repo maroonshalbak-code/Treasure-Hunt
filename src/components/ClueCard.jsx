@@ -13,7 +13,7 @@ const DIFF_CLASS = { 1: 'diff-1', 2: 'diff-2', 3: 'diff-3', 4: 'diff-4', 5: 'dif
 const DIFF_KEY = { 1: 'clue.diffEasy', 2: 'clue.diffMedium', 3: 'clue.diffHard', 4: 'clue.diffVeryHard', 5: 'clue.diffExpert' }
 const DIFF_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#ef4444', '#8b5cf6']
 
-export default function ClueCard({ clue, completed, pending, onComplete }) {
+export default function ClueCard({ clue, completed, pending, solvedBy, onComplete }) {
   const { user, profile } = useAuth()
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -78,6 +78,7 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
       photoUrl: photoUrl || null,
       status: isImageClue ? 'pending' : 'approved',
       completedAt: serverTimestamp(),
+      clueTitle: clue.title || '',
     })
 
     if (isImageClue) {
@@ -214,6 +215,13 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
           {clue.title}
         </div>
 
+        {/* Solver name */}
+        {completed && solvedBy && (
+          <div style={{ fontSize: 11, color: '#22c55e', fontWeight: 600, marginBottom: 6 }}>
+            ✓ {solvedBy.username}
+          </div>
+        )}
+
         {/* Bottom row: difficulty + points */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span className={`badge ${DIFF_CLASS[diff]}`} style={{ fontSize: 10, padding: '2px 7px' }}>
@@ -255,6 +263,11 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
       </div>
 
       <h3 style={{ fontWeight: 800, fontSize: 16, marginBottom: 6, color: 'var(--primary)' }}>{clue.title}</h3>
+      {completed && solvedBy && (
+        <div style={{ fontSize: 12, color: '#22c55e', fontWeight: 600, marginBottom: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span>✓</span><span>Solved by {solvedBy.username}</span>
+        </div>
+      )}
       <p style={{ fontSize: 14, color: 'var(--text2)', marginBottom: 12, lineHeight: 1.6 }}>{clue.riddle}</p>
 
       {clue.clueType === 'image' && clue.imageUrl && (
@@ -269,10 +282,16 @@ export default function ClueCard({ clue, completed, pending, onComplete }) {
       {success && <div className="alert alert-success" style={{ marginBottom: 8 }}>{success}</div>}
 
       {!isDone && !submitOpen && (
-        <button className="btn-ghost" style={{ fontSize: 13, width: '100%' }}
-          onClick={() => { setSubmitOpen(true); setError(null) }}>
-          {clue.clueType === 'image' ? t('clue.submitPhoto') : t('clue.submit')}
-        </button>
+        clue.clueType === 'image' && solvedBy ? (
+          <div style={{ fontSize: 12, color: 'var(--text3)', textAlign: 'center', padding: '0.5rem', background: 'var(--surface2)', borderRadius: 'var(--radius)' }}>
+            🏅 {solvedBy.username} already solved this clue first
+          </div>
+        ) : (
+          <button className="btn-ghost" style={{ fontSize: 13, width: '100%' }}
+            onClick={() => { setSubmitOpen(true); setError(null) }}>
+            {clue.clueType === 'image' ? t('clue.submitPhoto') : t('clue.submit')}
+          </button>
+        )
       )}
 
       {submitOpen && !isDone && (

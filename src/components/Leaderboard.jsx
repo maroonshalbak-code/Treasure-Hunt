@@ -7,11 +7,12 @@ import Avatar from './Avatar'
 const MEDALS = ['🥇', '🥈', '🥉']
 const TEAM_COLORS = ['#3498db', '#e74c3c']
 
-export default function Leaderboard({ huntId, totalClues, hunt }) {
+export default function Leaderboard({ huntId, totalClues, hunt, clues = [] }) {
   const { t } = useTranslation()
   const [rows, setRows] = useState([])
   const [profiles, setProfiles] = useState({})
   const [loading, setLoading] = useState(true)
+  const [selectedPlayer, setSelectedPlayer] = useState(null)
 
   const isTeams = hunt?.mode === 'teams'
   const teamNames = hunt?.teamNames || ['Team A', 'Team B']
@@ -22,14 +23,15 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
     const unsub = onSnapshot(q, async (snap) => {
       const byPlayer = {}
       snap.docs.forEach(d => {
-        const { playerId, username, points, completedAt, status } = d.data()
+        const { playerId, username, points, completedAt, status, clueId, clueTitle } = d.data()
         // Only count approved or legacy (no status) entries toward score
         if (status === 'pending' || status === 'rejected') return
         if (!byPlayer[playerId]) {
-          byPlayer[playerId] = { playerId, username, cluesFound: 0, totalPoints: 0, lastFoundAt: null }
+          byPlayer[playerId] = { playerId, username, cluesFound: 0, totalPoints: 0, lastFoundAt: null, solvedClues: [] }
         }
         byPlayer[playerId].cluesFound += 1
         byPlayer[playerId].totalPoints += points || 0
+        byPlayer[playerId].solvedClues.push({ clueId, clueTitle: clueTitle || clueId })
         const ts = completedAt?.toDate?.() ?? null
         if (ts && (!byPlayer[playerId].lastFoundAt || ts > byPlayer[playerId].lastFoundAt)) {
           byPlayer[playerId].lastFoundAt = ts
@@ -79,6 +81,30 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
 
     return (
       <div>
+      {selectedPlayer && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+          onClick={() => setSelectedPlayer(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '1.5rem', minWidth: 280, maxWidth: 400, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontWeight: 800, fontSize: 16 }}>{selectedPlayer.username}'s clues</span>
+              <button onClick={() => setSelectedPlayer(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>✕</button>
+            </div>
+            {selectedPlayer.solvedClues.length === 0 ? (
+              <p style={{ color: 'var(--text3)', fontSize: 14 }}>No clues solved yet.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {selectedPlayer.solvedClues.map((sc, i) => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', fontSize: 14 }}>
+                    <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
+                    <span>{sc.clueTitle}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
         {/* Team banners */}
         <div style={{ display: 'flex', gap: 0, borderBottom: '1px solid var(--border)' }}>
           {sorted.map((team, i) => (
@@ -109,7 +135,7 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
                 const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
                 const profile = profiles[row.playerId]
                 return (
-                  <div key={row.playerId} className="leaderboard-row">
+                  <div key={row.playerId} className="leaderboard-row" style={{ cursor: 'pointer' }} onClick={() => setSelectedPlayer(row)}>
                     <div className="rank" style={{ color: team.color }}>#{i + 1}</div>
                     <Avatar username={row.username} photoUrl={profile?.photoUrl} size={32} />
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -135,7 +161,7 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
           const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
           const profile = profiles[row.playerId]
           return (
-            <div key={row.playerId} className="leaderboard-row" style={{ opacity: 0.6 }}>
+            <div key={row.playerId} className="leaderboard-row" style={{ opacity: 0.6, cursor: 'pointer' }} onClick={() => setSelectedPlayer(row)}>
               <div className="rank">#{i + 1}</div>
               <Avatar username={row.username} photoUrl={profile?.photoUrl} size={32} />
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -157,11 +183,36 @@ export default function Leaderboard({ huntId, totalClues, hunt }) {
   // Individual mode leaderboard
   return (
     <div>
+      {selectedPlayer && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
+          onClick={() => setSelectedPlayer(null)}>
+          <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '1.5rem', minWidth: 280, maxWidth: 400, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}
+            onClick={e => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <span style={{ fontWeight: 800, fontSize: 16 }}>{selectedPlayer.username}'s clues</span>
+              <button onClick={() => setSelectedPlayer(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>✕</button>
+            </div>
+            {selectedPlayer.solvedClues.length === 0 ? (
+              <p style={{ color: 'var(--text3)', fontSize: 14 }}>No clues solved yet.</p>
+            ) : (
+              <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {selectedPlayer.solvedClues.map((sc, i) => (
+                  <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', fontSize: 14 }}>
+                    <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
+                    <span>{sc.clueTitle}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
+
       {rows.map((row, i) => {
         const pct = totalClues > 0 ? Math.round((row.cluesFound / totalClues) * 100) : 0
         const profile = profiles[row.playerId]
         return (
-          <div key={row.playerId} className="leaderboard-row">
+          <div key={row.playerId} className="leaderboard-row" style={{ cursor: 'pointer' }} onClick={() => setSelectedPlayer(row)}>
             <div className={`rank ${i < 3 ? 'top' : ''}`}>{i < 3 ? MEDALS[i] : `#${i + 1}`}</div>
             <Avatar username={row.username} photoUrl={profile?.photoUrl} size={36} />
             <div style={{ flex: 1, minWidth: 0 }}>

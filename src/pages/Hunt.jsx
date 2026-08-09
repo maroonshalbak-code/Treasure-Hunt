@@ -24,6 +24,7 @@ export default function Hunt() {
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState([])
   const [winner, setWinner] = useState(null) // { name, isTeam }
+  const [solvedByMap, setSolvedByMap] = useState({}) // clueId -> { username, playerId }
   const [complexityFilter, setComplexityFilter] = useState(0)   // 0 = all, 1-5
   const [statusFilter, setStatusFilter] = useState('all')        // all | open | pending | completed
   const [typeFilter, setTypeFilter] = useState('all')            // all | text | gps | qr | image
@@ -119,8 +120,16 @@ export default function Hunt() {
             else if (status === 'pending' && playerId === user.uid) pending.add(clueId)
             // rejected: allow current user to resubmit (don't add to either set)
           })
+          const solvedBy = {}
+          snap.docs.forEach(d => {
+            const { clueId, status, playerId, username } = d.data()
+            if (status === 'approved' && !solvedBy[clueId]) {
+              solvedBy[clueId] = { username, playerId }
+            }
+          })
           setCompletedIds(completed)
           setPendingIds(pending)
+          setSolvedByMap(solvedBy)
 
           // Check win condition — all clues approved
           if (cluesData.length > 0 && completed.size >= cluesData.length) {
@@ -360,6 +369,7 @@ export default function Hunt() {
                       clue={{ ...clue, huntId }}
                       completed={completedIds.has(clue.id)}
                       pending={pendingIds.has(clue.id)}
+                      solvedBy={solvedByMap[clue.id] || null}
                       onComplete={handleComplete}
                     />
                   ))}
@@ -375,7 +385,7 @@ export default function Hunt() {
               <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--primary)' }}>{t('hunt.liveLeaderboard')}</h2>
               <p style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{t('hunt.liveSubtitle')}</p>
             </div>
-            <Leaderboard huntId={huntId} totalClues={total} hunt={hunt} />
+            <Leaderboard huntId={huntId} totalClues={total} hunt={hunt} clues={clues} />
           </div>
         )}
       </div>
