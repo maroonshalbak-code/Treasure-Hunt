@@ -70,6 +70,7 @@ export default function Admin() {
   const [deletingImageId, setDeletingImageId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [editingTimes, setEditingTimes] = useState({}) // huntId -> { startsAt, endsAt }
   const [msg, setMsg] = useState(null)
   const [qrDataUrl, setQrDataUrl] = useState(null)
   const [qrToken, setQrToken] = useState(null)
@@ -106,6 +107,27 @@ export default function Admin() {
   async function fetchClues(huntId) {
     const snap = await getDocs(query(collection(db, 'hunts', huntId, 'clues'), orderBy('displayOrder')))
     setClues(snap.docs.map(d => ({ id: d.id, ...d.data() })))
+  }
+
+  async function saveHuntTimes(huntId) {
+    const vals = editingTimes[huntId]
+    if (!vals) return
+    const update = {
+      startsAt: vals.startsAt ? new Date(vals.startsAt) : null,
+      endsAt: vals.endsAt ? new Date(vals.endsAt) : null,
+    }
+    await updateDoc(doc(db, 'hunts', huntId), update)
+    setHunts(prev => prev.map(h => h.id === huntId ? { ...h, ...update } : h))
+    setEditingTimes(prev => { const n = {...prev}; delete n[huntId]; return n })
+    setMsg({ type: 'success', text: 'Hunt times updated.' })
+    setTimeout(() => setMsg(null), 3000)
+  }
+
+  function toDatetimeLocal(ts) {
+    if (!ts) return ''
+    const d = ts.toDate ? ts.toDate() : new Date(ts)
+    const pad = n => String(n).padStart(2, '0')
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
   async function fetchAllUsers() {
@@ -411,8 +433,32 @@ export default function Admin() {
                 <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('reviews'); fetchReviews(hunt.id) }}>{t('admin.hunts.btnReviews')}</button>
                 <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => { selectHunt(hunt); setTab('images'); fetchHuntImages(hunt.id) }}>{t('admin.hunts.btnImages')}</button>
                 <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => toggleHunt(hunt)}>{hunt.isActive ? t('admin.hunts.btnDeactivate') : t('admin.hunts.btnActivate')}</button>
+                <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditingTimes(prev => ({
+                  ...prev,
+                  [hunt.id]: prev[hunt.id] ? undefined : { startsAt: toDatetimeLocal(hunt.startsAt), endsAt: toDatetimeLocal(hunt.endsAt) }
+                }))}>🕐 Edit times</button>
                 <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => deleteHunt(hunt.id)}>{t('admin.hunts.btnDelete')}</button>
               </div>
+              {editingTimes[hunt.id] && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', minWidth: 70 }}>Starts at</label>
+                    <input type="datetime-local" style={{ flex: 1, fontSize: 13, padding: '0.35rem 0.6rem' }}
+                      value={editingTimes[hunt.id].startsAt || ''}
+                      onChange={e => setEditingTimes(prev => ({ ...prev, [hunt.id]: { ...prev[hunt.id], startsAt: e.target.value } }))} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: 'var(--text2)', minWidth: 70 }}>Ends at</label>
+                    <input type="datetime-local" style={{ flex: 1, fontSize: 13, padding: '0.35rem 0.6rem' }}
+                      value={editingTimes[hunt.id].endsAt || ''}
+                      onChange={e => setEditingTimes(prev => ({ ...prev, [hunt.id]: { ...prev[hunt.id], endsAt: e.target.value } }))} />
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button className="btn-primary" style={{ fontSize: 12, flex: 1 }} onClick={() => saveHuntTimes(hunt.id)}>Save</button>
+                    <button className="btn-ghost" style={{ fontSize: 12 }} onClick={() => setEditingTimes(prev => { const n={...prev}; delete n[hunt.id]; return n })}>Cancel</button>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
