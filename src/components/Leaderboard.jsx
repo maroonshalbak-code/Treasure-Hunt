@@ -27,8 +27,11 @@ export default function Leaderboard({ huntId, totalClues, hunt, clues = [] }) {
         // Only count approved or legacy (no status) entries toward score
         if (status === 'pending' || status === 'rejected') return
         if (!byPlayer[playerId]) {
-          byPlayer[playerId] = { playerId, username, cluesFound: 0, totalPoints: 0, lastFoundAt: null, solvedClues: [] }
+          byPlayer[playerId] = { playerId, username, cluesFound: 0, totalPoints: 0, lastFoundAt: null, solvedClues: [], seenClueIds: new Set() }
         }
+        // Deduplicate — only count each clue once per player
+        if (byPlayer[playerId].seenClueIds.has(clueId)) return
+        byPlayer[playerId].seenClueIds.add(clueId)
         byPlayer[playerId].cluesFound += 1
         byPlayer[playerId].totalPoints += points || 0
         const resolvedTitle = clueTitle || clues.find(c => c.id === clueId)?.title || clueId
