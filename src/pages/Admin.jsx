@@ -130,6 +130,23 @@ export default function Admin() {
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
   }
 
+  function sendHuntNotification(hunt) {
+    const startDate = hunt.startsAt?.toDate ? hunt.startsAt.toDate() : hunt.startsAt ? new Date(hunt.startsAt) : null
+    const dateStr = startDate
+      ? startDate.toLocaleString([], { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+      : 'soon'
+    const link = `${window.location.origin}/hunt/${hunt.id}`
+    const msg = `🏴‍☠️ *${hunt.title}*
+
+لديكم مغامرة كنز مجدولة!
+
+📅 *الموعد:* ${dateStr}
+🔗 *الرابط:* ${link}
+
+استعدوا وبالتوفيق! 🗝️`
+    openWhatsApp(msg)
+  }
+
   async function fetchAllUsers() {
     const snap = await getDocs(collection(db, 'profiles'))
     setAllUsers(snap.docs.map(d => ({ id: d.id, ...d.data() })))
@@ -437,6 +454,12 @@ export default function Admin() {
                   ...prev,
                   [hunt.id]: prev[hunt.id] ? undefined : { startsAt: toDatetimeLocal(hunt.startsAt), endsAt: toDatetimeLocal(hunt.endsAt) }
                 }))}>🕐 Edit times</button>
+                {hunt.startsAt && (
+                  <button className="btn-ghost" style={{ fontSize: 12, color: '#25D366', borderColor: '#25D366' }}
+                    onClick={() => sendHuntNotification(hunt)}>
+                    📲 Notify via WhatsApp
+                  </button>
+                )}
                 <button className="btn-danger" style={{ fontSize: 12 }} onClick={() => deleteHunt(hunt.id)}>{t('admin.hunts.btnDelete')}</button>
               </div>
               {editingTimes[hunt.id] && (
