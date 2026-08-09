@@ -31,7 +31,8 @@ export default function Leaderboard({ huntId, totalClues, hunt, clues = [] }) {
         }
         byPlayer[playerId].cluesFound += 1
         byPlayer[playerId].totalPoints += points || 0
-        byPlayer[playerId].solvedClues.push({ clueId, clueTitle: clueTitle || clueId })
+        const resolvedTitle = clueTitle || clues.find(c => c.id === clueId)?.title || clueId
+        byPlayer[playerId].solvedClues.push({ clueId, clueTitle: resolvedTitle })
         const ts = completedAt?.toDate?.() ?? null
         if (ts && (!byPlayer[playerId].lastFoundAt || ts > byPlayer[playerId].lastFoundAt)) {
           byPlayer[playerId].lastFoundAt = ts
