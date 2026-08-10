@@ -326,12 +326,13 @@ export default function Admin() {
       status: approve ? 'approved' : 'rejected'
     })
 
-    // If approving, delete all other pending submissions for the same clue
+    // If approving, reject (not delete) all other pending submissions for the same clue
+    // so those players get a proper rejection notification and can resubmit
     if (approve) {
       const approved = reviews.find(r => r.id === progressId)
       if (approved) {
         const others = reviews.filter(r => r.id !== progressId && r.clueId === approved.clueId)
-        await Promise.all(others.map(r => deleteDoc(doc(db, 'playerProgress', r.id))))
+        await Promise.all(others.map(r => updateDoc(doc(db, 'playerProgress', r.id), { status: 'rejected' })))
         setReviews(prev => prev.filter(r => r.clueId !== approved.clueId))
       } else {
         setReviews(prev => prev.filter(r => r.id !== progressId))
