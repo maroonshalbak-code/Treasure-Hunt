@@ -85,12 +85,12 @@ export default function Admin() {
 
   const [newHunt, setNewHunt] = useState({
     title: '', description: '', startsAt: '', endsAt: '',
-    mode: 'individual', teamAName: 'Team A', teamBName: 'Team B'
+    mode: 'individual', teamAName: 'Team A', teamBName: 'Team B', huntType: 'normal'
   })
   const [newClue, setNewClue] = useState({
     title: '', riddle: '', clueType: 'text', answers: [''],
     lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1,
-    targetDate: '', dateTolerance: 0, imageMode: 'hint'
+    targetDate: '', dateTolerance: 0, imageMode: 'hint', teamAssignment: 0
   })
 
   useEffect(() => { fetchHunts() }, [])
@@ -184,8 +184,9 @@ export default function Admin() {
       description: newHunt.description || null,
       isActive: true,
       allowedUsers: [],
-      mode: newHunt.mode,
-      teamNames: newHunt.mode === 'teams' ? [newHunt.teamAName || 'Team A', newHunt.teamBName || 'Team B'] : [],
+      mode: newHunt.huntType === 'sequence' ? 'teams' : newHunt.mode,
+      huntType: newHunt.huntType || 'normal',
+      teamNames: (newHunt.mode === 'teams' || newHunt.huntType === 'sequence') ? [newHunt.teamAName || 'Team A', newHunt.teamBName || 'Team B'] : [],
       teamAssignments: {},
       createdBy: user.uid,
       createdAt: serverTimestamp(),
@@ -194,7 +195,7 @@ export default function Admin() {
     }
     const ref = await addDoc(collection(db, 'hunts'), data)
     setMsg({ type: 'success', text: 'Hunt created! Add participants next.' })
-    setNewHunt({ title: '', description: '', startsAt: '', endsAt: '', mode: 'individual', teamAName: 'Team A', teamBName: 'Team B' })
+    setNewHunt({ title: '', description: '', startsAt: '', endsAt: '', mode: 'individual', teamAName: 'Team A', teamBName: 'Team B', huntType: 'normal' })
     await fetchHunts()
     const created = { id: ref.id, ...data, clueCount: 0 }
     setSelectedHunt(created)
@@ -274,6 +275,7 @@ export default function Admin() {
         difficulty: Number(newClue.difficulty),
         points: DIFFICULTY_POINTS[newClue.difficulty],
         displayOrder: clues.length,
+        ...(selectedHunt.huntType === 'sequence' ? { teamAssignment: newClue.teamAssignment ?? 0 } : {}),
       }
       if (newClue.clueType === 'text') payload.answers = newClue.answers.map(a => a.toLowerCase().trim()).filter(Boolean)
       if (newClue.clueType === 'gps') {
@@ -293,7 +295,7 @@ export default function Admin() {
 
       await addDoc(collection(db, 'hunts', selectedHunt.id, 'clues'), payload)
       setMsg({ type: 'success', text: t('admin.clues.added') })
-      setNewClue({ title: '', riddle: '', clueType: 'text', answers: [''], lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1, targetDate: '', dateTolerance: 0, imageMode: 'hint' })
+      setNewClue({ title: '', riddle: '', clueType: 'text', answers: [''], lat: '', lng: '', gpsRadiusMeters: 50, difficulty: 1, targetDate: '', dateTolerance: 0, imageMode: 'hint', teamAssignment: 0 })
       setClueImageUrl(null)
 
       if (newClue.clueType === 'qr') {
@@ -444,7 +446,8 @@ export default function Admin() {
                 <span className={`badge ${hunt.isActive ? 'badge-success' : 'badge-gray'}`}>
                   {hunt.isActive ? t('admin.hunts.active') : t('admin.hunts.inactive')}
                 </span>
-                {hunt.mode === 'teams' && <span className="badge badge-gold">{t('admin.hunts.teams')}</span>}
+                {hunt.huntType === 'sequence' && <span className="badge badge-gold">🔢 Sequence</span>}
+                {hunt.mode === 'teams' && hunt.huntType !== 'sequence' && <span className="badge badge-gold">{t('admin.hunts.teams')}</span>}
                 <span style={{ fontSize: 13, color: 'var(--text3)', marginLeft: 'auto' }}>
                   {t('admin.hunts.clueCount', { count: hunt.clueCount })} · {t('admin.hunts.playerCount', { count: (hunt.allowedUsers || []).length })}
                 </span>
@@ -506,15 +509,38 @@ export default function Admin() {
               <textarea rows={2} value={newHunt.description} onChange={e => setNewHunt(p => ({...p, description: e.target.value}))} style={{ resize: 'vertical' }} />
             </div>
             <div className="form-group">
-              <label>{t('admin.newHunt.labelMode')}</label>
+              <label>Hunt Type</label>
               <div style={{ display: 'flex', gap: 8 }}>
-                <button type="button" className={newHunt.mode === 'individual' ? 'btn-primary' : 'btn-ghost'} style={{ flex: 1 }}
-                  onClick={() => setNewHunt(p => ({...p, mode: 'individual'}))}>{t('admin.newHunt.modeIndividual')}</button>
-                <button type="button" className={newHunt.mode === 'teams' ? 'btn-primary' : 'btn-ghost'} style={{ flex: 1 }}
-                  onClick={() => setNewHunt(p => ({...p, mode: 'teams'}))}>{t('admin.newHunt.modeTeams')}</button>
+                {[
+                  { value: 'normal', label: '🗺️ Normal Hunt', desc: 'All clues visible, any order' },
+                  { value: 'sequence', label: '🔢 Sequence Hunt', desc: 'Teams only, clues unlocked one by one' }
+                ].map(opt => (
+                  <button key={opt.value} type="button"
+                    onClick={() => setNewHunt(p => ({ ...p, huntType: opt.value, mode: opt.value === 'sequence' ? 'teams' : p.mode }))}
+                    style={{
+                      flex: 1, padding: '10px 8px', borderRadius: 'var(--radius)', border: '2px solid',
+                      borderColor: newHunt.huntType === opt.value ? 'var(--primary)' : 'var(--border)',
+                      background: newHunt.huntType === opt.value ? 'rgba(99,102,241,0.08)' : 'var(--surface)',
+                      cursor: 'pointer', textAlign: 'left'
+                    }}>
+                    <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 2 }}>{opt.label}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text3)' }}>{opt.desc}</div>
+                  </button>
+                ))}
               </div>
             </div>
-            {newHunt.mode === 'teams' && (
+            {newHunt.huntType === 'normal' && (
+              <div className="form-group">
+                <label>{t('admin.newHunt.labelMode')}</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button type="button" className={newHunt.mode === 'individual' ? 'btn-primary' : 'btn-ghost'} style={{ flex: 1 }}
+                    onClick={() => setNewHunt(p => ({...p, mode: 'individual'}))}>{t('admin.newHunt.modeIndividual')}</button>
+                  <button type="button" className={newHunt.mode === 'teams' ? 'btn-primary' : 'btn-ghost'} style={{ flex: 1 }}
+                    onClick={() => setNewHunt(p => ({...p, mode: 'teams'}))}>{t('admin.newHunt.modeTeams')}</button>
+                </div>
+              </div>
+            )}
+            {(newHunt.huntType === 'sequence' || newHunt.mode === 'teams') && (
               <div className="form-row" style={{ marginBottom: '1rem' }}>
                 <div className="form-group" style={{ marginBottom: 0 }}>
                   <label>{t('admin.newHunt.labelTeam1')}</label>
@@ -789,6 +815,9 @@ export default function Admin() {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', gap: 6, marginBottom: 4 }}>
                         <span style={{ fontSize: 13 }}>{CLUE_TYPE_ICONS[clue.clueType]}</span>
+                        {selectedHunt?.huntType === 'sequence' && clue.teamAssignment !== undefined && (
+                          <span style={{ fontSize: 11, fontWeight: 700, padding: '1px 6px', borderRadius: 99, background: clue.teamAssignment === 0 ? '#3b82f615' : '#ef444415', color: clue.teamAssignment === 0 ? '#3b82f6' : '#ef4444' }}>{(selectedHunt.teamNames || ['Team A', 'Team B'])[clue.teamAssignment]}</span>
+                        )}
                         <span style={{ fontWeight: 500, fontSize: 14 }}>{clue.title}</span>
                       </div>
                       {clue.imageUrl && (
@@ -979,6 +1008,21 @@ export default function Admin() {
                     <input type="number" min={0} max={365} value={newClue.dateTolerance} onChange={e => setNewClue(p => ({...p, dateTolerance: e.target.value}))} />
                   </div>
                 </>
+              )}
+              {selectedHunt?.huntType === 'sequence' && (
+                <div className="form-group">
+                  <label>Assign to Team</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {(selectedHunt.teamNames || ['Team A', 'Team B']).map((name, idx) => (
+                      <button key={idx} type="button"
+                        onClick={() => setNewClue(p => ({ ...p, teamAssignment: idx }))}
+                        className={newClue.teamAssignment === idx ? 'btn-primary' : 'btn-ghost'}
+                        style={{ flex: 1 }}>
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label>{t('admin.clues.labelDifficulty')}</label>

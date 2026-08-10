@@ -197,13 +197,35 @@ export default function Hunt() {
     </div>
   )
 
-  const found = completedIds.size
-  const total = clues.length
+  // For sequence hunts show team-specific progress; for normal hunts show overall
+  const found = isSequence
+    ? sequenceClues.filter(c => completedIds.has(c.id)).length
+    : completedIds.size
+  const total = isSequence ? sequenceClues.length : clues.length
   const pct = total > 0 ? Math.round((found / total) * 100) : 0
 
   const teamAssignments = hunt?.teamAssignments || {}
   const teamNames = hunt?.teamNames || ['Team A', 'Team B']
   const isTeams = hunt?.mode === 'teams'
+  const isSequence = hunt?.huntType === 'sequence'
+  const myTeamId = isSequence ? teamAssignments[user.uid] : undefined
+
+  // For sequence hunts: filter and order clues for my team, compute locked state
+  const sequenceClues = isSequence && myTeamId !== undefined
+    ? [...clues]
+        .filter(c => c.teamAssignment === myTeamId)
+        .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+    : []
+
+  // A clue is locked if any earlier clue in the sequence is not yet completed
+  const lockedIds = new Set()
+  if (isSequence) {
+    let foundUnsolved = false
+    for (const c of sequenceClues) {
+      if (foundUnsolved) lockedIds.add(c.id)
+      if (!completedIds.has(c.id)) foundUnsolved = true
+    }
+  }
 
   const participantsByTeam = isTeams ? {
     0: participants.filter(p => teamAssignments[p.id] === 0),
@@ -256,7 +278,7 @@ export default function Hunt() {
 
         {tab === 'clues' && (
           <div>
-            {/* Filter bar */}
+            {/* Filter bar — hidden for sequence hunts */}
             <div style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: 8 }}>
               {/* Status filters */}
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -339,9 +361,28 @@ export default function Hunt() {
             </div>
 
             {/* Clue grid */}
-            {clues.length === 0 ? (
+            {isSequence && myTeamId === undefined ? (
+              <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '3rem', fontSize: 14 }}>
+                ⚠️ You have not been assigned to a team yet. Ask the admin to assign you.
+              </div>
+            ) : clues.length === 0 ? (
               <div style={{ textAlign: 'center', color: 'var(--text3)', padding: '3rem' }}>
                 {t('hunt.noClues')}
+              </div>
+            ) : isSequence ? (
+              <div className="clue-grid">
+                {sequenceClues.map((clue, idx) => (
+                  <ClueCard
+                    key={clue.id}
+                    clue={{ ...clue, huntId }}
+                    completed={completedIds.has(clue.id)}
+                    pending={pendingIds.has(clue.id)}
+                    solvedBy={solvedByMap[clue.id] || null}
+                    locked={lockedIds.has(clue.id)}
+                    sequenceNumber={idx + 1}
+                    onComplete={handleComplete}
+                  />
+                ))}
               </div>
             ) : (() => {
               const sorted = [

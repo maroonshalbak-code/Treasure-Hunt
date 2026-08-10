@@ -13,7 +13,7 @@ const DIFF_CLASS = { 1: 'diff-1', 2: 'diff-2', 3: 'diff-3', 4: 'diff-4', 5: 'dif
 const DIFF_KEY = { 1: 'clue.diffEasy', 2: 'clue.diffMedium', 3: 'clue.diffHard', 4: 'clue.diffVeryHard', 5: 'clue.diffExpert' }
 const DIFF_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#ef4444', '#8b5cf6']
 
-export default function ClueCard({ clue, completed, pending, solvedBy, onComplete }) {
+export default function ClueCard({ clue, completed, pending, solvedBy, locked, sequenceNumber, onComplete }) {
   const { user, profile } = useAuth()
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -184,6 +184,24 @@ export default function ClueCard({ clue, completed, pending, solvedBy, onComplet
   const diff = clue.difficulty || 1
   const accentColor = DIFF_COLORS[diff - 1]
 
+  // Locked tile (sequence hunts)
+  if (locked) {
+    return (
+      <div className="clue-tile" style={{ background: 'var(--surface2)', border: '1.5px solid var(--border)', borderLeft: '4px solid var(--border)', opacity: 0.5, cursor: 'not-allowed' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+          <span className={`badge ${TYPE_BADGE[clue.clueType] || 'badge-text'}`} style={{ fontSize: 10, padding: '2px 7px' }}>
+            {TYPE_EMOJI[clue.clueType]}
+          </span>
+          <span style={{ fontSize: 13, color: 'var(--text3)', background: 'var(--surface2)', borderRadius: 20, padding: '2px 8px' }}>🔒 Locked</span>
+        </div>
+        {sequenceNumber && (
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginBottom: 4 }}>Clue #{sequenceNumber}</div>
+        )}
+        <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--text3)', lineHeight: 1.3 }}>Solve the previous clue to unlock</div>
+      </div>
+    )
+  }
+
   // Status drives the left border color — visible on any theme
   const statusColor = completed ? '#22c55e' : pending ? '#f97316' : 'var(--border)'
   const statusBg = completed ? 'rgba(34,197,94,0.08)' : pending ? 'rgba(249,115,22,0.08)' : 'var(--surface)'
@@ -212,6 +230,7 @@ export default function ClueCard({ clue, completed, pending, solvedBy, onComplet
 
         {/* Title */}
         <div style={{ fontWeight: 800, fontSize: 14, color: 'var(--primary)', lineHeight: 1.3, marginBottom: 8 }}>
+          {sequenceNumber && <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text3)', marginRight: 4 }}>#{sequenceNumber}</span>}
           {clue.title}
         </div>
 
