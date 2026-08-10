@@ -13,6 +13,7 @@ export default function Leaderboard({ huntId, totalClues, hunt, clues = [] }) {
   const [profiles, setProfiles] = useState({})
   const [loading, setLoading] = useState(true)
   const [selectedPlayer, setSelectedPlayer] = useState(null)
+  const [selectedClue, setSelectedClue] = useState(null)
 
   const isTeams = hunt?.mode === 'teams'
   const teamNames = hunt?.teamNames || ['Team A', 'Team B']
@@ -87,23 +88,54 @@ export default function Leaderboard({ huntId, totalClues, hunt, clues = [] }) {
       <div>
       {selectedPlayer && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-          onClick={() => setSelectedPlayer(null)}>
+          onClick={() => { setSelectedPlayer(null); setSelectedClue(null) }}>
           <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '1.5rem', minWidth: 280, maxWidth: 400, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span style={{ fontWeight: 800, fontSize: 16 }}>{selectedPlayer.username}'s clues</span>
-              <button onClick={() => setSelectedPlayer(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>✕</button>
+              {selectedClue ? (
+                <button onClick={() => setSelectedClue(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--primary)', fontWeight: 700, padding: 0 }}>
+                  ← {selectedPlayer.username}'s clues
+                </button>
+              ) : (
+                <span style={{ fontWeight: 800, fontSize: 16 }}>{selectedPlayer.username}'s clues</span>
+              )}
+              <button onClick={() => { setSelectedPlayer(null); setSelectedClue(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>✕</button>
             </div>
-            {selectedPlayer.solvedClues.length === 0 ? (
+            {selectedClue ? (
+              <div>
+                <h3 style={{ fontWeight: 800, fontSize: 16, color: 'var(--primary)', marginBottom: 8 }}>{selectedClue.title}</h3>
+                {selectedClue.clueType && (
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'var(--surface2)', color: 'var(--text2)', marginBottom: 10, display: 'inline-block' }}>
+                    {{ text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅', puzzle: '🧩' }[selectedClue.clueType] || '❓'} {selectedClue.clueType}
+                  </span>
+                )}
+                <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, marginTop: 10 }}>{selectedClue.riddle}</p>
+                {(selectedClue.clueType === 'image' || selectedClue.clueType === 'puzzle') && selectedClue.imageUrl && (
+                  <img src={selectedClue.imageUrl} alt="clue" style={{ width: '100%', borderRadius: 8, marginTop: 10, objectFit: 'contain', background: 'var(--surface2)' }} />
+                )}
+                {selectedClue.clueType === 'gps' && selectedClue.lat && (
+                  <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8 }}>📍 {selectedClue.lat}, {selectedClue.lng} (±{selectedClue.gpsRadiusMeters}m)</p>
+                )}
+              </div>
+            ) : selectedPlayer.solvedClues.length === 0 ? (
               <p style={{ color: 'var(--text3)', fontSize: 14 }}>No clues solved yet.</p>
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {selectedPlayer.solvedClues.map((sc, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', fontSize: 14 }}>
-                    <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
-                    <span>{sc.clueTitle}</span>
-                  </li>
-                ))}
+                {selectedPlayer.solvedClues.map((sc, i) => {
+                  const fullClue = clues.find(c => c.id === sc.clueId)
+                  return (
+                    <li key={i}
+                      onClick={() => fullClue && setSelectedClue(fullClue)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', fontSize: 14, cursor: fullClue ? 'pointer' : 'default', transition: 'background 0.15s' }}
+                      onMouseEnter={e => { if (fullClue) e.currentTarget.style.background = 'var(--border)' }}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--surface2)'}
+                    >
+                      <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
+                      <span style={{ flex: 1 }}>{sc.clueTitle}</span>
+                      {fullClue && <span style={{ color: 'var(--text3)', fontSize: 12 }}>›</span>}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
@@ -189,23 +221,54 @@ export default function Leaderboard({ huntId, totalClues, hunt, clues = [] }) {
     <div>
       {selectedPlayer && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
-          onClick={() => setSelectedPlayer(null)}>
+          onClick={() => { setSelectedPlayer(null); setSelectedClue(null) }}>
           <div style={{ background: 'var(--surface)', borderRadius: 'var(--radius)', padding: '1.5rem', minWidth: 280, maxWidth: 400, width: '100%', maxHeight: '80vh', overflowY: 'auto' }}
             onClick={e => e.stopPropagation()}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <span style={{ fontWeight: 800, fontSize: 16 }}>{selectedPlayer.username}'s clues</span>
-              <button onClick={() => setSelectedPlayer(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>✕</button>
+              {selectedClue ? (
+                <button onClick={() => setSelectedClue(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: 'var(--primary)', fontWeight: 700, padding: 0 }}>
+                  ← {selectedPlayer.username}'s clues
+                </button>
+              ) : (
+                <span style={{ fontWeight: 800, fontSize: 16 }}>{selectedPlayer.username}'s clues</span>
+              )}
+              <button onClick={() => { setSelectedPlayer(null); setSelectedClue(null) }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: 'var(--text3)' }}>✕</button>
             </div>
-            {selectedPlayer.solvedClues.length === 0 ? (
+            {selectedClue ? (
+              <div>
+                <h3 style={{ fontWeight: 800, fontSize: 16, color: 'var(--primary)', marginBottom: 8 }}>{selectedClue.title}</h3>
+                {selectedClue.clueType && (
+                  <span style={{ fontSize: 12, fontWeight: 700, padding: '2px 8px', borderRadius: 99, background: 'var(--surface2)', color: 'var(--text2)', marginBottom: 10, display: 'inline-block' }}>
+                    {{ text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅', puzzle: '🧩' }[selectedClue.clueType] || '❓'} {selectedClue.clueType}
+                  </span>
+                )}
+                <p style={{ fontSize: 14, color: 'var(--text2)', lineHeight: 1.7, marginTop: 10 }}>{selectedClue.riddle}</p>
+                {(selectedClue.clueType === 'image' || selectedClue.clueType === 'puzzle') && selectedClue.imageUrl && (
+                  <img src={selectedClue.imageUrl} alt="clue" style={{ width: '100%', borderRadius: 8, marginTop: 10, objectFit: 'contain', background: 'var(--surface2)' }} />
+                )}
+                {selectedClue.clueType === 'gps' && selectedClue.lat && (
+                  <p style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8 }}>📍 {selectedClue.lat}, {selectedClue.lng} (±{selectedClue.gpsRadiusMeters}m)</p>
+                )}
+              </div>
+            ) : selectedPlayer.solvedClues.length === 0 ? (
               <p style={{ color: 'var(--text3)', fontSize: 14 }}>No clues solved yet.</p>
             ) : (
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {selectedPlayer.solvedClues.map((sc, i) => (
-                  <li key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', fontSize: 14 }}>
-                    <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
-                    <span>{sc.clueTitle}</span>
-                  </li>
-                ))}
+                {selectedPlayer.solvedClues.map((sc, i) => {
+                  const fullClue = clues.find(c => c.id === sc.clueId)
+                  return (
+                    <li key={i}
+                      onClick={() => fullClue && setSelectedClue(fullClue)}
+                      style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '0.5rem 0.75rem', background: 'var(--surface2)', borderRadius: 'var(--radius)', fontSize: 14, cursor: fullClue ? 'pointer' : 'default', transition: 'background 0.15s' }}
+                      onMouseEnter={e => { if (fullClue) e.currentTarget.style.background = 'var(--border)' }}
+                      onMouseLeave={e => e.currentTarget.style.background = 'var(--surface2)'}
+                    >
+                      <span style={{ color: '#22c55e', fontWeight: 700 }}>✓</span>
+                      <span style={{ flex: 1 }}>{sc.clueTitle}</span>
+                      {fullClue && <span style={{ color: 'var(--text3)', fontSize: 12 }}>›</span>}
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </div>
