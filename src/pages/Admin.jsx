@@ -45,8 +45,8 @@ async function destroyCloudinaryImage(url) {
   if (data.result !== 'ok' && data.result !== 'not found') throw new Error(data.result || 'Cloudinary error')
 }
 
-const CLUE_TYPES = ['text', 'gps', 'qr', 'image', 'date']
-const CLUE_TYPE_ICONS = { text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅' }
+const CLUE_TYPES = ['text', 'gps', 'qr', 'image', 'date', 'puzzle']
+const CLUE_TYPE_ICONS = { text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅', puzzle: '🧩' }
 const TEAM_COLORS = ['#3498db', '#e74c3c']
 const DIFFICULTY_LABELS = { 1: '⭐ Easy', 2: '⭐⭐ Medium', 3: '⭐⭐⭐ Hard', 4: '⭐⭐⭐⭐ Very Hard', 5: '⭐⭐⭐⭐⭐ Expert' }
 const DIFFICULTY_COLORS = { 1: '#15803d', 2: '#1d4ed8', 3: '#b45309', 4: '#c2410c', 5: '#7e22ce' }
@@ -282,6 +282,10 @@ export default function Admin() {
       }
       if (newClue.clueType === 'qr') payload.qrToken = token
       if (newClue.clueType === 'image') payload.imageUrl = clueImageUrl
+      if (newClue.clueType === 'puzzle') {
+        payload.imageUrl = clueImageUrl
+        payload.answers = newClue.answers.map(a => a.toLowerCase().trim()).filter(Boolean)
+      }
       if (newClue.clueType === 'date') {
         payload.targetDate = newClue.targetDate
         payload.dateTolerance = Number(newClue.dateTolerance)
@@ -926,6 +930,41 @@ export default function Admin() {
                       Players will read your riddle and upload a photo as their answer. No hint image required.
                     </p>
                   )}
+                </div>
+              )}
+              {newClue.clueType === 'puzzle' && (
+                <div className="form-group">
+                  <label>Puzzle Image <span style={{ color: 'var(--text3)', fontWeight: 400 }}>(required)</span></label>
+                  <input ref={clueImgRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleClueImageUpload} />
+                  {clueImageUrl ? (
+                    <div>
+                      <img src={clueImageUrl} alt="puzzle preview" style={{ width: '100%', maxHeight: 200, objectFit: 'contain', borderRadius: 8, marginBottom: 8, background: 'var(--surface2)' }} />
+                      <button type="button" className="btn-ghost" style={{ fontSize: 12, width: '100%' }} onClick={() => clueImgRef.current.click()}>{t('admin.clues.changeImage')}</button>
+                    </div>
+                  ) : (
+                    <button type="button" className="btn-ghost" style={{ width: '100%' }} onClick={() => clueImgRef.current.click()} disabled={uploadingClueImg}>
+                      {uploadingClueImg ? t('admin.clues.uploadingImage') : '🧩 Upload puzzle image'}
+                    </button>
+                  )}
+                  <div className="form-group" style={{ marginTop: 12, marginBottom: 0 }}>
+                    <label>{t('admin.clues.labelAnswers')}</label>
+                    {newClue.answers.map((ans, idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: 6, marginBottom: 6 }}>
+                        <input
+                          placeholder={`Answer ${idx + 1}`}
+                          value={ans}
+                          onChange={e => setNewClue(p => { const a = [...p.answers]; a[idx] = e.target.value; return { ...p, answers: a } })}
+                          required={idx === 0}
+                        />
+                        {newClue.answers.length > 1 && (
+                          <button type="button" className="btn-ghost" style={{ flexShrink: 0, padding: '0 10px', color: 'var(--danger)' }}
+                            onClick={() => setNewClue(p => ({ ...p, answers: p.answers.filter((_, i) => i !== idx) }))}>✕</button>
+                        )}
+                      </div>
+                    ))}
+                    <button type="button" className="btn-ghost" style={{ fontSize: 12, width: '100%' }}
+                      onClick={() => setNewClue(p => ({ ...p, answers: [...p.answers, ''] }))}>＋ Add another answer</button>
+                  </div>
                 </div>
               )}
               {newClue.clueType === 'date' && (

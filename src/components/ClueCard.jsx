@@ -7,8 +7,8 @@ import { useAuth } from '../lib/AuthContext'
 const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME
 const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
 
-const TYPE_BADGE = { text: 'badge-text', gps: 'badge-gps', qr: 'badge-qr', image: 'badge-image', date: 'badge-text' }
-const TYPE_EMOJI = { text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅' }
+const TYPE_BADGE = { text: 'badge-text', gps: 'badge-gps', qr: 'badge-qr', image: 'badge-image', date: 'badge-text', puzzle: 'badge-text' }
+const TYPE_EMOJI = { text: '💬', gps: '📍', qr: '📷', image: '🖼️', date: '📅', puzzle: '🧩' }
 const DIFF_CLASS = { 1: 'diff-1', 2: 'diff-2', 3: 'diff-3', 4: 'diff-4', 5: 'diff-5' }
 const DIFF_KEY = { 1: 'clue.diffEasy', 2: 'clue.diffMedium', 3: 'clue.diffHard', 4: 'clue.diffVeryHard', 5: 'clue.diffExpert' }
 const DIFF_COLORS = ['#22c55e', '#3b82f6', '#f97316', '#ef4444', '#8b5cf6']
@@ -179,7 +179,7 @@ export default function ClueCard({ clue, completed, pending, solvedBy, onComplet
     }
   }
 
-  const typeLabels = { text: t('clue.riddle'), gps: t('clue.gps'), qr: t('clue.qr'), image: t('clue.image'), date: t('clue.date') }
+  const typeLabels = { text: t('clue.riddle'), gps: t('clue.gps'), qr: t('clue.qr'), image: t('clue.image'), date: t('clue.date'), puzzle: '🧩 Puzzle' }
   const isDone = completed || pending
   const diff = clue.difficulty || 1
   const accentColor = DIFF_COLORS[diff - 1]
@@ -278,6 +278,14 @@ export default function ClueCard({ clue, completed, pending, solvedBy, onComplet
           onClick={() => window.open(clue.imageUrl, '_blank')}
         />
       )}
+      {clue.clueType === 'puzzle' && clue.imageUrl && (
+        <img
+          src={clue.imageUrl}
+          alt="puzzle"
+          style={{ width: '100%', objectFit: 'contain', borderRadius: 8, marginBottom: 12, cursor: 'pointer', background: 'var(--surface2)' }}
+          onClick={() => window.open(clue.imageUrl, '_blank')}
+        />
+      )}
 
       {success && <div className="alert alert-success" style={{ marginBottom: 8 }}>{success}</div>}
 
@@ -289,7 +297,7 @@ export default function ClueCard({ clue, completed, pending, solvedBy, onComplet
         ) : (
           <button className="btn-ghost" style={{ fontSize: 13, width: '100%' }}
             onClick={() => { setSubmitOpen(true); setError(null) }}>
-            {clue.clueType === 'image' ? t('clue.submitPhoto') : t('clue.submit')}
+            {clue.clueType === 'image' ? t('clue.submitPhoto') : clue.clueType === 'puzzle' ? '🧩 ' + t('clue.submit') : t('clue.submit')}
           </button>
         )
       )}
@@ -298,7 +306,7 @@ export default function ClueCard({ clue, completed, pending, solvedBy, onComplet
         <div style={{ marginTop: 8 }}>
           {error && <div className="alert alert-error" style={{ marginBottom: 8 }}>{error}</div>}
 
-          {clue.clueType === 'text' && (
+          {(clue.clueType === 'text' || clue.clueType === 'puzzle') && (
             <form onSubmit={handleTextSubmit} style={{ display: 'flex', gap: 8 }}>
               <input placeholder={t('clue.yourAnswer')} value={answer} onChange={e => setAnswer(e.target.value)} required />
               <button className="btn-primary" type="submit" disabled={loading} style={{ flexShrink: 0, padding: '0.5rem 1rem' }}>
