@@ -29,7 +29,13 @@ service cloud.firestore {
     match /playerProgress/{progressId} {
       allow read: if request.auth != null;
       allow create: if request.auth != null && request.resource.data.playerId == request.auth.uid;
-      allow update, delete: if isAdmin();
+      // Admin can update/delete anything; players can only re-submit their own rejected docs
+      allow update: if isAdmin() ||
+        (request.auth != null &&
+         request.auth.uid == resource.data.playerId &&
+         resource.data.status == 'rejected' &&
+         request.resource.data.status == 'pending');
+      allow delete: if isAdmin();
     }
 
     match /invites/{token} {
