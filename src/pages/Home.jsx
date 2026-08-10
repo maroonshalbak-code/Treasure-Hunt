@@ -132,7 +132,7 @@ export default function Home() {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {hunts.map((hunt, i) => (
-            <HuntCard key={hunt.id} hunt={hunt} emoji={HUNT_EMOJIS[i % HUNT_EMOJIS.length]} onJoin={() => navigate(`/hunt/${hunt.id}`)} />
+            <HuntCard key={hunt.id} hunt={hunt} emoji={HUNT_EMOJIS[i % HUNT_EMOJIS.length]} onJoin={() => navigate(`/hunt/${hunt.id}`)} onViewResults={() => navigate(`/hunt/${hunt.id}?tab=leaderboard`)} />
           ))}
         </div>
       )}
@@ -140,7 +140,7 @@ export default function Home() {
   )
 }
 
-function HuntCard({ hunt, emoji, onJoin }) {
+function HuntCard({ hunt, emoji, onJoin, onViewResults }) {
   const { t } = useTranslation()
   const now = new Date()
   const started = !hunt.startsAt || hunt.startsAt.toDate() <= now
@@ -211,7 +211,15 @@ function HuntCard({ hunt, emoji, onJoin }) {
               ⏱ {t('home.ends', { date: hunt.endsAt.toDate().toLocaleDateString() })}
             </span>
           )}
-          {!completed && (
+          {completed ? (
+            <button
+              className="btn-ghost"
+              style={{ marginLeft: 'auto', padding: '0.45rem 1.1rem', fontSize: 14, color: '#22c55e', borderColor: '#22c55e' }}
+              onClick={e => { e.stopPropagation(); onViewResults() }}
+            >
+              🏆 View Results
+            </button>
+          ) : (
             <button
               className="btn-primary"
               style={{ marginLeft: 'auto', padding: '0.45rem 1.1rem', fontSize: 14 }}

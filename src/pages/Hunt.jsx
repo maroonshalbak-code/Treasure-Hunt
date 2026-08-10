@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { doc, getDoc, collection, getDocs, query, where, orderBy, onSnapshot } from 'firebase/firestore'
 import { db } from '../lib/firebase'
@@ -15,12 +15,13 @@ export default function Hunt() {
   const { user } = useAuth()
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [hunt, setHunt] = useState(null)
   const [clues, setClues] = useState([])
   const [completedIds, setCompletedIds] = useState(new Set())
   const [pendingIds, setPendingIds] = useState(new Set())
   const [participants, setParticipants] = useState([])
-  const [tab, setTab] = useState('clues')
+  const [tab, setTab] = useState(searchParams.get('tab') === 'leaderboard' ? 'leaderboard' : 'clues')
   const [loading, setLoading] = useState(true)
   const [notifications, setNotifications] = useState([])
   const [winner, setWinner] = useState(null) // { name, isTeam }
